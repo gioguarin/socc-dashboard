@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  socc:
+    build: .
+    container_name: socc-dashboard
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3141:3141"
+    volumes:
+      - ./server/data:/app/server/data
+    networks:
+      - socc-net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: socc-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - socc-net
+    depends_on:
+      - socc
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  socc-net:
+    driver: bridge
