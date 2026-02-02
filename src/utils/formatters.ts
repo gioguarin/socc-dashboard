@@ -56,14 +56,35 @@ export function formatCurrentTime(): string {
   });
 }
 
+/**
+ * Check if currently on shift. Reads config from localStorage
+ * (set via Preferences), falling back to defaults.
+ * Default: Sun-Wed, 7:00-17:00, America/New_York
+ */
 export function isOnShift(): boolean {
+  let shiftDays = [0, 1, 2, 3]; // Sun-Wed
+  let startHour = 7;
+  let endHour = 17;
+  let tz = 'America/New_York';
+
+  try {
+    const stored = localStorage.getItem('socc-shift-config');
+    if (stored) {
+      const cfg = JSON.parse(stored);
+      if (cfg.days) shiftDays = cfg.days;
+      if (cfg.startHour != null) startHour = cfg.startHour;
+      if (cfg.endHour != null) endHour = cfg.endHour;
+      if (cfg.timezone) tz = cfg.timezone;
+    }
+  } catch {
+    // Use defaults
+  }
+
   const now = new Date();
-  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const day = et.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed
-  const hour = et.getHours();
-  const isShiftDay = day >= 0 && day <= 3; // Sun-Wed
-  const isShiftHour = hour >= 7 && hour < 17; // 7AM-5PM
-  return isShiftDay && isShiftHour;
+  const localized = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+  const day = localized.getDay();
+  const hour = localized.getHours();
+  return shiftDays.includes(day) && hour >= startHour && hour < endHour;
 }
 
 export function getCvssColor(score: number): string {

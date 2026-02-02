@@ -1,22 +1,15 @@
 import { Router } from 'express';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { readDataFile } from '../utils.js';
 import { getDb } from '../db/index.js';
 import { ingestThreats } from '../db/ingest.js';
 import { detectAnomaly } from '../anomaly.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router = Router();
 
 /** Current threats from JSON pipeline (+ ingest to SQLite) */
 router.get('/', (_req, res) => {
   try {
-    const data = JSON.parse(
-      readFileSync(path.resolve(__dirname, '..', 'data', 'threats.json'), 'utf-8')
-    );
+    const data = readDataFile('threats.json', []);
 
     // Ingest into SQLite for historical tracking
     try {

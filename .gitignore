@@ -20,8 +20,15 @@ dist/
 Thumbs.db
 
 # Logs
+logs/
 *.log
 npm-debug.log*
+
+# Runtime data (populated by pipelines)
+server/data/news.json
+server/data/threats.json
+server/data/stocks.json
+server/data/briefings.json
 
 # SQLite database (generated at runtime)
 server/data/*.db
@@ -30,3 +37,6 @@ server/data/*.db-shm
 
 # TypeScript
 tsconfig.tsbuildinfo
+
+# Internal build instructions
+CLAUDE.md
