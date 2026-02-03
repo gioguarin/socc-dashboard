@@ -50,8 +50,25 @@ app.get('/api/health', (_req, res) => {
 // Serve static files in production
 if (config.nodeEnv === 'production') {
   const distPath = path.resolve(__dirname, '..', 'dist');
-  app.use(express.static(distPath));
+
+  // Hashed assets (JS/CSS) — long cache (Vite adds content hashes to filenames)
+  app.use('/assets', express.static(path.join(distPath, 'assets'), {
+    maxAge: '1y',
+    immutable: true,
+  }));
+
+  // Everything else — no cache (index.html, manifest, icons)
+  app.use(express.static(distPath, {
+    maxAge: 0,
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    },
+  }));
+
   app.get('*', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
