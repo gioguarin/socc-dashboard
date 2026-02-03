@@ -8,6 +8,7 @@ export interface NewsItem {
   category: 'product' | 'security' | 'business' | 'research' | 'incident';
   status: 'new' | 'reviewed' | 'flagged' | 'dismissed';
   sentiment?: 'positive' | 'negative' | 'neutral';
+  tldr?: string;
 }
 
 export interface ThreatItem {

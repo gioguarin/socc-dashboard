@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { ExternalLink, Flag, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ExternalLink, Flag, Eye, EyeOff, ChevronDown, Sparkles } from 'lucide-react';
 import { NewsItem } from '../../types';
 import { SOURCE_COLORS, SOURCE_LABELS, CATEGORY_LABELS } from '../../utils/constants';
 import { timeAgo } from '../../utils/formatters';
@@ -10,16 +11,20 @@ interface NewsCardProps {
 }
 
 export default function NewsCard({ item }: NewsCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const sourceColor = SOURCE_COLORS[item.source] || SOURCE_COLORS.general;
   const isDimmed = item.status === 'reviewed' || item.status === 'dismissed';
   const isFlagged = item.status === 'flagged';
 
-  /* Compute sentiment from item data or use pre-computed value */
   const sentiment = item.sentiment || analyzeSentiment(item.title, item.summary);
   const sentimentCfg = SENTIMENT_CONFIG[sentiment];
 
+  const hasTldr = Boolean(item.tldr);
+  const hasDetails = hasTldr || item.summary;
+
   return (
     <motion.div
+      layout
       data-item
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
@@ -31,47 +36,107 @@ export default function NewsCard({ item }: NewsCardProps) {
           : 'border-l-socc-border/50'
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sourceColor}`}>
-              {SOURCE_LABELS[item.source]}
-            </span>
-            <span className="text-[10px] text-gray-600 uppercase">
-              {CATEGORY_LABELS[item.category]}
-            </span>
-            {/* Sentiment badge */}
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sentimentCfg.bg} ${sentimentCfg.color} ${sentimentCfg.border}`}
-              title={`Sentiment: ${sentimentCfg.label}`}
-            >
-              {sentimentCfg.icon} {sentimentCfg.label}
-            </span>
-            <span className="text-[10px] text-gray-600">{timeAgo(item.publishedAt)}</span>
+      <div
+        className={hasDetails ? 'cursor-pointer' : ''}
+        onClick={() => hasDetails && setExpanded(!expanded)}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sourceColor}`}>
+                {SOURCE_LABELS[item.source]}
+              </span>
+              <span className="text-[10px] text-gray-600 uppercase">
+                {CATEGORY_LABELS[item.category]}
+              </span>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sentimentCfg.bg} ${sentimentCfg.color} ${sentimentCfg.border}`}
+                title={`Sentiment: ${sentimentCfg.label}`}
+              >
+                {sentimentCfg.icon} {sentimentCfg.label}
+              </span>
+              {hasTldr && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                  <Sparkles className="w-2.5 h-2.5 inline mr-0.5" />
+                  AI Summary
+                </span>
+              )}
+              <span className="text-[10px] text-gray-600">{timeAgo(item.publishedAt)}</span>
+            </div>
+            <h4 className="text-sm font-medium text-gray-200 leading-snug">{item.title}</h4>
+            {!expanded && (
+              <p className="text-xs text-gray-500 mt-1 line-clamp-1 leading-relaxed">{item.summary}</p>
+            )}
           </div>
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-gray-200 hover:text-socc-cyan transition-colors leading-snug inline-flex items-center gap-1"
-          >
-            {item.title}
-            <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
-          </a>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{item.summary}</p>
-        </div>
 
-        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-1 rounded hover:bg-socc-border/30 text-gray-500 hover:text-amber-400 transition-colors" title="Flag">
-            <Flag className="w-3.5 h-3.5" />
-          </button>
-          <button className="p-1 rounded hover:bg-socc-border/30 text-gray-500 hover:text-green-400 transition-colors" title="Mark reviewed">
-            {isDimmed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                className="p-1 rounded hover:bg-socc-border/30 text-gray-500 hover:text-amber-400 transition-colors"
+                title="Flag"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Flag className="w-3.5 h-3.5" />
+              </button>
+              <button
+                className="p-1 rounded hover:bg-socc-border/30 text-gray-500 hover:text-green-400 transition-colors"
+                title="Mark reviewed"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {isDimmed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            {hasDetails && (
+              <ChevronDown
+                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Status indicators */}
+      {/* Expandable detail section */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 pt-2 border-t border-socc-border/20">
+              {/* AI-generated TL;DR */}
+              {hasTldr && (
+                <div className="mb-2.5 px-3 py-2 rounded-md bg-purple-500/5 border border-purple-500/15">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className="w-3 h-3 text-purple-400" />
+                    <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">
+                      TL;DR
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">{item.tldr}</p>
+                </div>
+              )}
+
+              {/* Original description */}
+              <p className="text-xs text-gray-500 leading-relaxed">{item.summary}</p>
+
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-xs text-socc-cyan hover:text-cyan-300 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Read full article
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New indicator dot */}
       {item.status === 'new' && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[3px] w-2 h-2 rounded-full bg-socc-cyan animate-pulse" />
       )}
