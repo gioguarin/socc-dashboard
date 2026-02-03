@@ -279,10 +279,12 @@ except Exception:
 
 # Find items with cveId but no cvssScore (need enrichment)
 to_enrich = [t for t in threats if t.get("cveId") and t.get("cvssScore") is None]
-print(f"NVD: {len(to_enrich)} items need CVSS enrichment")
+MAX_PER_RUN = 5  # Keep batch small to avoid timeouts (5 * 7s = 35s max)
+batch = to_enrich[:MAX_PER_RUN]
+print(f"NVD: {len(to_enrich)} need enrichment, processing {len(batch)} this run")
 
 enriched_count = 0
-for item in to_enrich[:10]:  # Max 10 per run to respect rate limits
+for item in batch:
     cve_id = item["cveId"]
     print(f"  Fetching {cve_id}...")
 
@@ -309,7 +311,8 @@ for item in to_enrich[:10]:  # Max 10 per run to respect rate limits
             item["affectedVendors"] = vendors
 
     # Rate limit: 7 seconds between requests (5 req/30s limit)
-    time.sleep(7)
+    if item != batch[-1]:  # Skip sleep after last item
+        time.sleep(7)
 
 # Also do vendor mapping for all items that have products but no affectedVendors yet
 for item in threats:
