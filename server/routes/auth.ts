@@ -4,6 +4,11 @@
  * Provides login, logout, and session status endpoints.
  * Currently uses environment-variable credentials (SOCC_ADMIN_USER / SOCC_ADMIN_PASS).
  *
+ * Rate Limiting:
+ * - Login attempts: 5 per 15 minutes per IP
+ * - Refresh attempts: 10 per 15 minutes per IP
+ * - General auth endpoints: 20 per minute per IP
+ *
  * TODO: Replace env-var auth with a proper auth provider (OAuth, SSO, LDAP).
  * TODO: Add /api/auth/register for multi-user support.
  * TODO: Add /api/auth/providers for listing available OAuth providers.
@@ -11,9 +16,40 @@
 
 import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { createToken, createRefreshToken, verifyToken } from '../auth/token.js';
 
 const router = Router();
+
+/** Rate limiter for login attempts - strict to prevent brute force */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: { error: 'Too many login attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting when auth is disabled
+  skip: () => process.env.SOCC_AUTH_ENABLED !== 'true',
+});
+
+/** Rate limiter for refresh token requests */
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 refresh attempts per window
+  message: { error: 'Too many refresh requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.SOCC_AUTH_ENABLED !== 'true',
+});
+
+/** General rate limiter for auth endpoints */
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 requests per minute
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /** Cookie options for the session token */
 const COOKIE_OPTIONS = {
@@ -37,7 +73,7 @@ const REFRESH_COOKIE_OPTIONS = {
  * GET /api/auth/status
  * Returns whether auth is enabled and the current user (if authenticated).
  */
-router.get('/status', async (req: Request, res: Response) => {
+router.get('/status', authLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
 
   // Try to read existing session
@@ -73,7 +109,7 @@ router.get('/status', async (req: Request, res: Response) => {
  * Authenticate with username/password.
  * Credentials are validated against SOCC_ADMIN_USER and SOCC_ADMIN_PASS env vars.
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
   if (!authEnabled) {
     res.status(400).json({ error: 'Authentication is not enabled' });
@@ -134,7 +170,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * POST /api/auth/logout
  * Clear the session cookie.
  */
-router.post('/logout', (_req: Request, res: Response) => {
+router.post('/logout', authLimiter, (_req: Request, res: Response) => {
   res.clearCookie('socc_token', { path: '/' });
   res.clearCookie('socc_refresh_token', { path: '/api/auth' });
   res.json({ success: true });
@@ -144,7 +180,7 @@ router.post('/logout', (_req: Request, res: Response) => {
  * POST /api/auth/refresh
  * Refresh an expired access token using a valid refresh token.
  */
-router.post('/refresh', async (req: Request, res: Response) => {
+router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
   if (!authEnabled) {
     res.status(400).json({ error: 'Authentication is not enabled' });
