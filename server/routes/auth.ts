@@ -18,6 +18,7 @@ import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { createToken, createRefreshToken, verifyToken } from '../auth/token.js';
+import { sendSuccess, sendError, sendBadRequest, sendUnauthorized } from '../utils/response.js';
 
 const router = Router();
 
@@ -134,7 +135,7 @@ router.get('/status', authLimiter, async (req: Request, res: Response) => {
     }
   }
 
-  res.json({ authEnabled, user });
+  sendSuccess(res, { authEnabled, user });
 });
 
 /**
@@ -212,14 +213,14 @@ router.get('/status', authLimiter, async (req: Request, res: Response) => {
 router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
   if (!authEnabled) {
-    res.status(400).json({ error: 'Authentication is not enabled' });
+    sendBadRequest(res, 'Authentication is not enabled');
     return;
   }
 
   const { username, password } = req.body as { username?: string; password?: string };
 
   if (!username || !password) {
-    res.status(400).json({ error: 'Username and password are required' });
+    sendBadRequest(res, 'Username and password are required');
     return;
   }
 
@@ -228,7 +229,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
   if (!adminUser || !adminPass) {
     console.error('❌ SOCC_ADMIN_USER and SOCC_ADMIN_PASS must be set when auth is enabled');
-    res.status(500).json({ error: 'Server authentication not configured' });
+    sendError(res, 'Server authentication not configured', { status: 500 });
     return;
   }
 
@@ -244,7 +245,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   if (!usernameMatch || !passwordMatch) {
     // Small delay to deter brute force
     setTimeout(() => {
-      res.status(401).json({ error: 'Invalid credentials' });
+      sendUnauthorized(res, 'Invalid credentials');
     }, 500 + Math.random() * 500);
     return;
   }
@@ -257,7 +258,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   res.cookie('socc_token', token, COOKIE_OPTIONS);
   res.cookie('socc_refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS);
 
-  res.json({
+  sendSuccess(res, {
     user: {
       username,
       role: 'admin' as const,
@@ -295,7 +296,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 router.post('/logout', authLimiter, (_req: Request, res: Response) => {
   res.clearCookie('socc_token', { path: '/' });
   res.clearCookie('socc_refresh_token', { path: '/api/auth' });
-  res.json({ success: true });
+  sendSuccess(res, { message: 'Logged out successfully' });
 });
 
 /**
@@ -352,14 +353,14 @@ router.post('/logout', authLimiter, (_req: Request, res: Response) => {
 router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
   if (!authEnabled) {
-    res.status(400).json({ error: 'Authentication is not enabled' });
+    sendBadRequest(res, 'Authentication is not enabled');
     return;
   }
 
   // Extract refresh token from cookie
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) {
-    res.status(401).json({ error: 'No refresh token found' });
+    sendUnauthorized(res, 'No refresh token found');
     return;
   }
 
@@ -373,7 +374,7 @@ router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
 
   const refreshToken = cookies['socc_refresh_token'];
   if (!refreshToken) {
-    res.status(401).json({ error: 'No refresh token found' });
+    sendUnauthorized(res, 'No refresh token found');
     return;
   }
 
@@ -382,7 +383,7 @@ router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
   const payload = await verifyRefreshToken(refreshToken);
 
   if (!payload) {
-    res.status(401).json({ error: 'Invalid or expired refresh token' });
+    sendUnauthorized(res, 'Invalid or expired refresh token');
     return;
   }
 
@@ -392,7 +393,7 @@ router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
   // Set new access token cookie
   res.cookie('socc_token', newToken, COOKIE_OPTIONS);
 
-  res.json({
+  sendSuccess(res, {
     user: {
       username: payload.username,
       role: payload.role,
