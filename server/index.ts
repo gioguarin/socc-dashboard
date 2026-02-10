@@ -13,6 +13,7 @@ import threatsRouter from './routes/threats.js';
 import stocksRouter from './routes/stocks.js';
 import briefingsRouter from './routes/briefings.js';
 import sourcesRouter from './routes/sources.js';
+import { sendSuccess } from './utils/response.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +47,7 @@ app.use('/api/sources', sourcesRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
+  sendSuccess(res, { status: 'ok', uptime: process.uptime() });
 });
 
 // API documentation (Swagger UI) - accessible without auth

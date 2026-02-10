@@ -62,8 +62,9 @@ describe('useApi hook', () => {
     expect(result.current.data).toBe(null);
   });
 
-  it('unwraps anomaly-wrapped responses', async () => {
+  it('unwraps standardized API responses', async () => {
     const wrappedData = {
+      success: true,
       data: { items: [1, 2, 3] },
       anomaly: { detected: true },
     };

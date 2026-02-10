@@ -3,10 +3,36 @@ import { readDataFile } from '../utils.js';
 import { ingestNews } from '../db/ingest.js';
 import { detectAnomaly } from '../anomaly.js';
 import { getDb } from '../db/index.js';
+import { sendSuccess, sendServerError } from '../utils/response.js';
 
 const router = Router();
 
-/** Current news from JSON pipeline (+ ingest to SQLite) */
+/**
+ * @swagger
+ * /api/news:
+ *   get:
+ *     summary: Get current news feed
+ *     description: Returns aggregated security/industry news from tracked vendors. Anomaly detection included.
+ *     tags: [News]
+ *     responses:
+ *       200:
+ *         description: News data with optional anomaly alert
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/NewsItem'
+ *                 anomaly:
+ *                   $ref: '#/components/schemas/Anomaly'
+ *       500:
+ *         description: Server error
+ */
 router.get('/', (_req, res) => {
   try {
     const data = readDataFile('news.json', []);
@@ -21,13 +47,39 @@ router.get('/', (_req, res) => {
     // Check for anomalies
     const anomaly = detectAnomaly('news');
 
-    res.json({ data, anomaly });
+    sendSuccess(res, data, { anomaly });
   } catch {
-    res.status(500).json({ error: 'Failed to read news data' });
+    sendServerError(res, 'Failed to read news data');
   }
 });
 
-/** Historical news data from SQLite */
+/**
+ * @swagger
+ * /api/news/history:
+ *   get:
+ *     summary: Get historical news data
+ *     description: Query historical news from SQLite with optional source filter
+ *     tags: [News]
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *           maximum: 365
+ *         description: Number of days of history to return
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [akamai, cloudflare, fastly, zscaler, crowdstrike, paloalto, f5, general]
+ *         description: Filter by news source
+ *     responses:
+ *       200:
+ *         description: Historical news data
+ *       500:
+ *         description: Server error
+ */
 router.get('/history', (req, res) => {
   try {
     const days = Math.min(parseInt(String(req.query.days) || '30', 10), 365);
@@ -49,9 +101,9 @@ router.get('/history', (req, res) => {
     query += ' ORDER BY published_at DESC';
 
     const rows = db.prepare(query).all(...params);
-    res.json(rows);
+    sendSuccess(res, rows, { meta: { count: rows.length, days } });
   } catch {
-    res.status(500).json({ error: 'Failed to query news history' });
+    sendServerError(res, 'Failed to query news history');
   }
 });
 

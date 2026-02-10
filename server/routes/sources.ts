@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { readFileSync, statSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { sendSuccess, sendServerError } from '../utils/response.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,6 +83,19 @@ const SOURCES = [
   },
 ];
 
+/**
+ * @swagger
+ * /api/sources:
+ *   get:
+ *     summary: Get RSS/data sources
+ *     description: Returns configured data sources with status, item counts, and last-fetched timestamps
+ *     tags: [RSS Sources]
+ *     responses:
+ *       200:
+ *         description: Source configurations with enriched metadata
+ *       500:
+ *         description: Server error
+ */
 router.get('/', (_req, res) => {
   try {
     const dataDir = path.resolve(__dirname, '..', 'data');
@@ -107,9 +121,9 @@ router.get('/', (_req, res) => {
       return { ...source, itemCount, lastFetched, status };
     });
 
-    res.json(enriched);
+    sendSuccess(res, enriched, { meta: { count: enriched.length } });
   } catch {
-    res.status(500).json({ error: 'Failed to read sources' });
+    sendServerError(res, 'Failed to read sources');
   }
 });
 
