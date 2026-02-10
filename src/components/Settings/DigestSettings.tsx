@@ -91,25 +91,31 @@ export function DigestSettings({ open, onClose }: DigestSettingsProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-50"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none"
           >
-            <div className="bg-socc-surface border border-socc-border/50 rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto pointer-events-auto">
+            <div className="bg-socc-surface border border-socc-border/40 rounded-2xl shadow-[var(--socc-modal-shadow)] w-full max-w-lg max-h-[85vh] overflow-hidden pointer-events-auto">
+              {/* Gradient accent */}
+              <div className="h-[2px] bg-gradient-to-r from-transparent via-socc-cyan/50 to-transparent" />
+
+              <div className="overflow-y-auto max-h-[calc(85vh-2px)]">
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-socc-border/30">
-                <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
-                  <Coffee className="w-4 h-4 text-socc-cyan" />
-                  Morning Briefing Settings
-                </h2>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-socc-border/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-socc-cyan/10 flex items-center justify-center">
+                    <Coffee className="w-3.5 h-3.5 text-socc-cyan" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-gray-200">Morning Briefing Settings</h2>
+                </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-socc-hover transition-colors text-gray-400 hover:text-gray-200"
+                  className="p-1.5 rounded-lg hover:bg-socc-hover/80 text-gray-500 hover:text-gray-300 transition-all"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -216,12 +222,13 @@ export function DigestSettings({ open, onClose }: DigestSettingsProps) {
                     </button>
                     <button
                       onClick={handleSave}
-                      className="px-4 py-1.5 rounded-lg text-xs font-medium bg-socc-cyan/10 text-socc-cyan border border-socc-cyan/30 hover:bg-socc-cyan/20 transition-colors"
+                      className="px-4 py-2 rounded-lg text-xs font-semibold bg-socc-cyan/15 text-socc-cyan border border-socc-cyan/30 hover:bg-socc-cyan/25 hover:border-socc-cyan/50 hover:shadow-sm hover:shadow-socc-cyan/10 transition-all duration-200"
                     >
                       Save Settings
                     </button>
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </motion.div>

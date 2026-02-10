@@ -30,28 +30,33 @@ export default function RssSourceManager({ open, onClose }: RssSourceManagerProp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-40"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-40"
             onClick={onClose}
           />
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-socc-surface border border-socc-border/50 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="bg-socc-surface border border-socc-border/40 rounded-2xl shadow-[var(--socc-modal-shadow)] w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+              {/* Gradient accent */}
+              <div className="h-[2px] bg-gradient-to-r from-transparent via-socc-cyan/50 to-transparent" />
+
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-socc-border/30">
-                <div className="flex items-center gap-2">
-                  <Rss className="w-4 h-4 text-socc-cyan" />
+              <div className="flex items-center justify-between px-5 py-4 border-b border-socc-border/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-socc-cyan/10 flex items-center justify-center">
+                    <Rss className="w-3.5 h-3.5 text-socc-cyan" />
+                  </div>
                   <h2 className="text-sm font-semibold text-gray-200">RSS Sources</h2>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-socc-hover text-gray-500 hover:text-gray-300 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-socc-hover/80 text-gray-500 hover:text-gray-300 transition-all"
                 >
                   <X className="w-4 h-4" />
                 </button>
