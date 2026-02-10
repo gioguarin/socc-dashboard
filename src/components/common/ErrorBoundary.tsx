@@ -35,8 +35,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[200px] p-6 text-center">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-6 h-6 text-red-400" />
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-7 h-7 text-red-400" />
           </div>
           <h4 className="text-sm font-semibold text-gray-200 mb-1">
             {this.props.panelName ? `${this.props.panelName} failed to load` : 'Something went wrong'}
@@ -46,9 +46,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </p>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl
               bg-socc-cyan/10 text-socc-cyan border border-socc-cyan/20
-              hover:bg-socc-cyan/20 transition-colors"
+              hover:bg-socc-cyan/20 hover:border-socc-cyan/40 hover:shadow-sm hover:shadow-socc-cyan/10
+              transition-all duration-200"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry

@@ -10,7 +10,7 @@ export function Skeleton({ className = '', count = 1 }: SkeletonProps) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`animate-pulse bg-socc-border/30 rounded ${className}`}
+          className={`animate-pulse bg-socc-border/20 rounded-lg ${className}`}
         />
       ))}
     </div>
@@ -21,9 +21,9 @@ export function Skeleton({ className = '', count = 1 }: SkeletonProps) {
 function ShimmerBar({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`relative overflow-hidden rounded bg-socc-border/20 ${className}`}
+      className={`relative overflow-hidden rounded-lg bg-socc-border/15 ${className}`}
     >
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-socc-border/30 to-transparent" />
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] bg-gradient-to-r from-transparent via-socc-border/20 to-transparent" />
     </div>
   );
 }

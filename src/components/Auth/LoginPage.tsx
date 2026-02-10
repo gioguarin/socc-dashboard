@@ -49,13 +49,14 @@ export function LoginPage() {
         }}
       />
 
-      {/* Radial glow */}
-      <div className="absolute inset-0 bg-gradient-radial from-socc-cyan/5 via-transparent to-transparent opacity-50" />
+      {/* Radial glow blobs */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-socc-cyan/[0.04] rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-indigo-500/[0.03] rounded-full blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-sm mx-4"
       >
         {/* Logo / Header */}
@@ -63,13 +64,13 @@ export function LoginPage() {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-socc-surface border border-socc-border/50 mb-4"
+            transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-socc-cyan/20 to-indigo-500/10 border border-socc-cyan/20 mb-4 shadow-lg shadow-socc-cyan/5"
           >
             <Shield className="w-8 h-8 text-socc-cyan" />
           </motion.div>
-          <h1 className="text-lg font-semibold text-gray-200 tracking-wide">
-            SOCC <span className="text-socc-cyan">Dashboard</span>
+          <h1 className="text-lg font-semibold tracking-wide text-gradient-accent">
+            SOCC Dashboard
           </h1>
           <p className="text-xs text-gray-500 mt-1 font-mono tracking-wider">
             SECURITY OPERATIONS COMMAND CENTER
@@ -77,7 +78,9 @@ export function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-socc-surface/80 backdrop-blur-sm border border-socc-border/50 rounded-xl p-6 shadow-2xl">
+        <div className="relative bg-socc-surface/80 backdrop-blur-sm border border-socc-border/50 rounded-2xl p-6 shadow-[var(--socc-modal-shadow)] overflow-hidden">
+          {/* Gradient accent line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-socc-cyan via-indigo-400 to-socc-cyan" />
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error message */}
             {error && (
@@ -106,7 +109,7 @@ export function LoginPage() {
                   autoComplete="username"
                   autoFocus
                   disabled={submitting}
-                  className="w-full h-10 pl-10 pr-4 text-sm bg-socc-bg/80 border border-socc-border/50 rounded-lg
+                  className="w-full h-10 pl-10 pr-4 text-sm bg-socc-bg/80 border border-socc-border/50 rounded-xl
                     text-gray-200 placeholder:text-gray-600
                     focus:outline-none focus:border-socc-cyan/50 focus:ring-1 focus:ring-socc-cyan/20
                     disabled:opacity-50 transition-all"
@@ -129,7 +132,7 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   disabled={submitting}
-                  className="w-full h-10 pl-10 pr-10 text-sm bg-socc-bg/80 border border-socc-border/50 rounded-lg
+                  className="w-full h-10 pl-10 pr-10 text-sm bg-socc-bg/80 border border-socc-border/50 rounded-xl
                     text-gray-200 placeholder:text-gray-600
                     focus:outline-none focus:border-socc-cyan/50 focus:ring-1 focus:ring-socc-cyan/20
                     disabled:opacity-50 transition-all"
@@ -151,7 +154,8 @@ export function LoginPage() {
               type="submit"
               disabled={submitting || !username.trim() || !password}
               className="w-full h-10 bg-socc-cyan/10 hover:bg-socc-cyan/20 border border-socc-cyan/30 hover:border-socc-cyan/50
-                text-socc-cyan text-sm font-medium rounded-lg
+                text-socc-cyan text-sm font-semibold rounded-xl
+                hover:shadow-md hover:shadow-socc-cyan/10
                 disabled:opacity-40 disabled:cursor-not-allowed
                 transition-all duration-200 relative overflow-hidden"
             >
