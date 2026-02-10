@@ -17,12 +17,11 @@ export default function StockCard({ stock }: StockCardProps) {
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       className={`
-        relative overflow-hidden rounded-lg border transition-all duration-200
+        relative overflow-hidden rounded-xl border transition-all duration-300 card-hover-gradient
         ${isAkam
-          ? 'bg-socc-cyan/5 border-socc-cyan/20 hover:border-socc-cyan/40'
-          : 'bg-socc-card/60 border-socc-border/40 hover:border-socc-border/60'
+          ? 'bg-socc-cyan/5 border-socc-cyan/20 hover:border-socc-cyan/40 hover:shadow-sm hover:shadow-socc-cyan/5'
+          : 'bg-socc-card/50 border-socc-border/30 hover:border-socc-border/50 hover:shadow-[var(--socc-card-shadow-hover)]'
         }
-        hover:bg-socc-hover/40
       `}
     >
       {/* Subtle positive/negative tint */}
@@ -34,7 +33,7 @@ export default function StockCard({ stock }: StockCardProps) {
         <div className="flex items-start justify-between mb-2">
           <div>
             <div className="flex items-center gap-1.5">
-              <span className={`text-sm font-bold font-mono ${isAkam ? 'text-socc-cyan' : 'text-gray-200'}`}>
+              <span className={`text-sm font-bold font-mono ${isAkam ? 'text-gradient-accent' : 'text-gray-200'}`}>
                 {stock.symbol}
               </span>
               {positive ? (

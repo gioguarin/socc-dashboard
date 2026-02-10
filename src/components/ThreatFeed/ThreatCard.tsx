@@ -30,10 +30,10 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
       data-item
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`relative group border border-socc-border/40 rounded-lg overflow-hidden bg-socc-card/60 hover:bg-socc-hover/60 transition-colors duration-200`}
+      className={`relative group border border-socc-border/30 rounded-xl overflow-hidden bg-socc-card/50 hover:bg-socc-hover/50 hover:border-socc-border/50 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300`}
     >
       {/* Severity bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${sevColors.bar}`} />
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${sevColors.bar} opacity-80`} />
 
       <div className="pl-4 pr-3 py-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-start justify-between gap-3">
@@ -44,7 +44,7 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
                 <span className="text-xs font-mono text-gray-400">{threat.cveId}</span>
               )}
               {threat.cisaKev && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse">
                   <AlertTriangle className="w-3 h-3" />
                   Actively Exploited
                 </span>
@@ -55,7 +55,7 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
                 return (
                   <span
                     key={v}
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}
                     title={`Affects ${cfg.label}`}
                   >
                     {cfg.label}
@@ -74,16 +74,16 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
           <div className="flex items-center gap-2 shrink-0">
             {threat.cvssScore != null && (
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border text-sm font-mono font-bold ${getCvssColor(threat.cvssScore)} ${getCvssBgColor(threat.cvssScore)}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-offset-1 ring-offset-socc-card text-sm font-mono font-bold ${getCvssColor(threat.cvssScore)} ${getCvssBgColor(threat.cvssScore)}`}
               >
                 {threat.cvssScore.toFixed(1)}
               </div>
             )}
-            <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium ${statusColor.bg} ${statusColor.text} border ${statusColor.border}`}>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium ${statusColor.bg} ${statusColor.text} border ${statusColor.border}`}>
               {threat.status.replace('_', ' ')}
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-gray-500 group-hover:text-gray-400 transition-all duration-300 ${expanded ? 'rotate-180' : ''}`}
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-3 border-t border-socc-border/30">
+            <div className="px-4 pb-4 border-t border-socc-border/20 bg-socc-surface/20">
               <p className="text-xs text-gray-400 mt-3 leading-relaxed">{threat.description}</p>
               {threat.affectedProducts && threat.affectedProducts.length > 0 && (
                 <div className="mt-3 flex items-start gap-2">

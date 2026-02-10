@@ -28,12 +28,12 @@ export default function NewsCard({ item }: NewsCardProps) {
       data-item
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`group relative pl-4 py-2.5 pr-3 border-l-2 transition-all duration-200 hover:bg-socc-hover/40 rounded-r-md ${
+      className={`group relative pl-4 py-3 pr-3 border-l-[3px] transition-all duration-300 hover:bg-socc-hover/30 rounded-r-lg ${
         isFlagged
           ? 'border-l-amber-500 bg-amber-500/5'
           : isDimmed
-          ? 'border-l-gray-700 opacity-50 hover:opacity-80'
-          : 'border-l-socc-border/50'
+          ? 'border-l-gray-700/50 opacity-50 hover:opacity-80'
+          : 'border-l-socc-border/40 hover:border-l-socc-cyan/40'
       }`}
     >
       <div
@@ -43,20 +43,20 @@ export default function NewsCard({ item }: NewsCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sourceColor}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${sourceColor}`}>
                 {SOURCE_LABELS[item.source]}
               </span>
               <span className="text-[10px] text-gray-600 uppercase">
                 {CATEGORY_LABELS[item.category]}
               </span>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${sentimentCfg.bg} ${sentimentCfg.color} ${sentimentCfg.border}`}
+                className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${sentimentCfg.bg} ${sentimentCfg.color} ${sentimentCfg.border}`}
                 title={`Sentiment: ${sentimentCfg.label}`}
               >
                 {sentimentCfg.icon} {sentimentCfg.label}
               </span>
               {hasTldr && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
                   <Sparkles className="w-2.5 h-2.5 inline mr-0.5" />
                   AI Summary
                 </span>
@@ -138,7 +138,10 @@ export default function NewsCard({ item }: NewsCardProps) {
 
       {/* New indicator dot */}
       {item.status === 'new' && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[3px] w-2 h-2 rounded-full bg-socc-cyan animate-pulse" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[3px]">
+          <div className="w-2 h-2 rounded-full bg-socc-cyan" />
+          <div className="absolute inset-0 w-2 h-2 rounded-full bg-socc-cyan animate-ping opacity-40" />
+        </div>
       )}
     </motion.div>
   );

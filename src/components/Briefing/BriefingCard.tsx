@@ -29,10 +29,10 @@ export default function BriefingCard({ briefing, defaultExpanded = false }: Brie
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="border border-socc-border/40 rounded-lg overflow-hidden bg-socc-card/60"
+      className="border border-socc-border/30 rounded-xl overflow-hidden bg-socc-card/50 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300"
     >
       <div
-        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-socc-hover/40 transition-colors"
+        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-socc-hover/30 transition-all duration-200"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3">
