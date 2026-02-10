@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import swaggerUi from 'swagger-ui-express';
 import { config } from './config.js';
 import { authGuard } from './auth/middleware.js';
 import { getDb, closeDb } from './db/index.js';
+import { swaggerSpec } from './swagger.js';
 import authRouter from './routes/auth.js';
 import newsRouter from './routes/news.js';
 import threatsRouter from './routes/threats.js';
@@ -45,6 +47,17 @@ app.use('/api/sources', sourcesRouter);
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// API documentation (Swagger UI) - accessible without auth
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'SOCC Dashboard API Documentation',
+}));
+
+// Serve raw OpenAPI spec as JSON
+app.get('/api/openapi.json', (_req, res) => {
+  res.json(swaggerSpec);
 });
 
 // Serve static files in production

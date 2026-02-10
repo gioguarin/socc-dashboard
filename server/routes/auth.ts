@@ -70,8 +70,41 @@ const REFRESH_COOKIE_OPTIONS = {
 };
 
 /**
- * GET /api/auth/status
- * Returns whether auth is enabled and the current user (if authenticated).
+ * @swagger
+ * /api/auth/status:
+ *   get:
+ *     summary: Check authentication status
+ *     description: Returns whether authentication is enabled and current user info if authenticated
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Authentication status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 authEnabled:
+ *                   type: boolean
+ *                   description: Whether authentication is enabled
+ *                 user:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [admin, viewer]
+ *                     loginAt:
+ *                       type: number
+ *                       description: Unix timestamp of login
+ *       429:
+ *         description: Too many requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/status', authLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
@@ -105,9 +138,76 @@ router.get('/status', authLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/auth/login
- * Authenticate with username/password.
- * Credentials are validated against SOCC_ADMIN_USER and SOCC_ADMIN_PASS env vars.
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user
+ *     description: Login with username and password. Returns session tokens in httpOnly cookies.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: Username
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         headers:
+ *           Set-Cookie:
+ *             description: Session token and refresh token cookies
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [admin, viewer]
+ *                     loginAt:
+ *                       type: number
+ *       400:
+ *         description: Bad request (missing credentials or auth disabled)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many login attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server authentication not configured
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
@@ -167,8 +267,30 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/auth/logout
- * Clear the session cookie.
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     description: Clear session tokens and logout
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       429:
+ *         description: Too many requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/logout', authLimiter, (_req: Request, res: Response) => {
   res.clearCookie('socc_token', { path: '/' });
@@ -177,8 +299,55 @@ router.post('/logout', authLimiter, (_req: Request, res: Response) => {
 });
 
 /**
- * POST /api/auth/refresh
- * Refresh an expired access token using a valid refresh token.
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Get a new access token using a valid refresh token
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         headers:
+ *           Set-Cookie:
+ *             description: New access token cookie
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [admin, viewer]
+ *                     loginAt:
+ *                       type: number
+ *       400:
+ *         description: Authentication not enabled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No refresh token or token invalid/expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many refresh requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/refresh', refreshLimiter, async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
