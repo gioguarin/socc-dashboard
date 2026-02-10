@@ -26,16 +26,17 @@ export default function BriefingPanel({ compact = false, maxItems, onViewAll }: 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-socc-border/30">
-        <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-socc-cyan" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-socc-border/20 bg-socc-surface/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-md bg-socc-cyan/10 flex items-center justify-center">
+            <FileText className="w-3.5 h-3.5 text-socc-cyan" />
+          </div>
           <h3 className="text-sm font-semibold text-gray-200">Briefings</h3>
           {briefings && (
             <Badge className="bg-socc-border/50 text-gray-400">{briefings.length}</Badge>
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          {/* Export buttons — shown when there's a latest briefing and not compact */}
           {!compact && latestBriefing && (
             <>
               <button
@@ -55,8 +56,12 @@ export default function BriefingPanel({ compact = false, maxItems, onViewAll }: 
             </>
           )}
           {onViewAll && (
-            <button onClick={onViewAll} className="text-xs text-socc-cyan hover:text-cyan-300 transition-colors">
-              View All →
+            <button
+              onClick={onViewAll}
+              className="flex items-center gap-1 text-xs text-socc-cyan/80 hover:text-socc-cyan font-medium transition-colors group/viewall"
+            >
+              View All
+              <span className="group-hover/viewall:translate-x-0.5 transition-transform">&rarr;</span>
             </button>
           )}
         </div>

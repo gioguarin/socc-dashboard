@@ -156,9 +156,9 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
         <div className="flex justify-end px-2 pb-1">
           <button
             onClick={handleResetLayout}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium
-              text-gray-500 hover:text-gray-300 bg-socc-surface/60 border border-socc-border/30
-              hover:border-socc-border/50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold
+              text-gray-400 hover:text-socc-cyan bg-socc-surface/60 border border-socc-border/30
+              hover:border-socc-cyan/30 hover:bg-socc-cyan/5 transition-all duration-200"
           >
             <RotateCcw className="w-3 h-3" />
             Reset Layout
@@ -180,15 +180,15 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
         {panels.map((panel) => (
           <div
             key={panel}
-            className="bg-socc-card/40 border border-socc-border/30 rounded-xl overflow-hidden
-              hover:border-socc-border/50 transition-colors group"
+            className="bg-socc-card/30 border border-socc-border/20 rounded-2xl overflow-hidden
+              hover:border-socc-border/40 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300 group"
           >
             {/* Drag handle */}
-            <div className="drag-handle absolute top-0 left-0 right-0 h-6 z-10 cursor-grab active:cursor-grabbing
-              flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-b bg-socc-surface/80 backdrop-blur-sm">
-                <GripVertical className="w-3 h-3 text-gray-500" />
-                <span className="text-[9px] text-gray-500 font-medium">{PANEL_LABELS[panel]}</span>
+            <div className="drag-handle absolute top-0 left-0 right-0 h-7 z-10 cursor-grab active:cursor-grabbing
+              flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-b-lg bg-socc-surface/90 backdrop-blur-sm border border-t-0 border-socc-border/30 shadow-sm">
+                <GripVertical className="w-3 h-3 text-socc-cyan/60" />
+                <span className="text-[9px] text-gray-400 font-semibold tracking-wider uppercase">{PANEL_LABELS[panel]}</span>
               </div>
             </div>
             {renderPanel(panel)}

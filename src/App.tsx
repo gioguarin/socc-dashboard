@@ -59,7 +59,7 @@ export default function App() {
         return <DashboardView onNavigate={setActiveView} visiblePanels={preferences.visiblePanels} />;
       case 'threats':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="Threat Intel">
               <ThreatFeed />
             </ErrorBoundary>
@@ -67,7 +67,7 @@ export default function App() {
         );
       case 'news':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="News Feed">
               <NewsFeed />
             </ErrorBoundary>
@@ -75,7 +75,7 @@ export default function App() {
         );
       case 'stocks':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="Stock Tracker">
               <StockTracker />
             </ErrorBoundary>
@@ -83,7 +83,7 @@ export default function App() {
         );
       case 'briefings':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="Briefings">
               <BriefingPanel />
             </ErrorBoundary>
@@ -91,7 +91,7 @@ export default function App() {
         );
       case 'notes':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="Shift Notes">
               <ShiftNotes />
             </ErrorBoundary>
@@ -99,7 +99,7 @@ export default function App() {
         );
       case 'projects':
         return (
-          <div className="h-full bg-socc-card/20 rounded-xl m-4 border border-socc-border/30 overflow-hidden">
+          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
             <ErrorBoundary panelName="Projects">
               <ProjectTracker />
             </ErrorBoundary>
@@ -127,10 +127,10 @@ export default function App() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeView}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="h-full"
           >
             {renderView()}
