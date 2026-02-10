@@ -25,7 +25,7 @@ export function AnomalyBanner({ anomaly }: AnomalyBannerProps) {
         exit={{ height: 0, opacity: 0 }}
         className="border-b border-amber-500/20"
       >
-        <div className="flex items-center justify-between px-4 py-2 bg-amber-500/5">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-l-2 border-l-amber-400">
           <div className="flex items-center gap-2 text-xs text-amber-400">
             <Zap className="w-3.5 h-3.5 shrink-0" />
             <span className="font-medium">{anomaly.message}</span>
