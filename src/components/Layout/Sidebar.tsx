@@ -39,46 +39,55 @@ export default function Sidebar({ activeView, onViewChange, lastRefresh, initial
     <motion.aside
       animate={{ width: collapsed ? 56 : 192 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="h-full bg-socc-surface/60 border-r border-socc-border/30 flex flex-col relative z-10"
+      className="h-full bg-socc-surface/70 backdrop-blur-sm border-r border-socc-border/20 flex flex-col relative z-10"
     >
       {/* Nav items */}
       <nav className="flex-1 py-3 space-y-0.5 px-2">
         {NAV_ITEMS.map(({ view, icon: Icon, label }) => {
           const isActive = activeView === view;
           return (
-            <button
-              key={view}
-              onClick={() => onViewChange(view)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                transition-all duration-150 relative overflow-hidden
-                ${isActive
-                  ? 'bg-socc-cyan/10 text-socc-cyan'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-socc-hover/50'
-                }
-              `}
-              title={collapsed ? label : undefined}
-            >
-              {/* Active indicator */}
-              {isActive && (
-                <motion.div
-                  layoutId="sidebar-active"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-socc-cyan rounded-r"
-                  transition={{ duration: 0.2 }}
-                />
-              )}
-              <Icon className="w-4 h-4 shrink-0" />
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="truncate"
-                >
+            <div key={view} className="relative group/nav">
+              <button
+                onClick={() => onViewChange(view)}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                  transition-all duration-200 relative overflow-hidden
+                  ${isActive
+                    ? 'bg-socc-cyan/10 text-socc-cyan shadow-sm shadow-socc-cyan/5'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-socc-hover/60'
+                  }
+                `}
+              >
+                {/* Active indicator — gradient bar */}
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebar-active"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gradient-to-b from-socc-cyan to-indigo-400 rounded-r-full"
+                    transition={{ duration: 0.2 }}
+                  />
+                )}
+                <Icon className={`w-4 h-4 shrink-0 transition-colors ${!isActive ? 'group-hover/nav:text-socc-cyan/70' : ''}`} />
+                {!collapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="truncate"
+                  >
+                    {label}
+                  </motion.span>
+                )}
+              </button>
+
+              {/* Tooltip for collapsed state */}
+              {collapsed && (
+                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-md bg-socc-surface border border-socc-border/50 shadow-lg text-xs text-gray-200 whitespace-nowrap opacity-0 pointer-events-none group-hover/nav:opacity-100 transition-opacity duration-200 z-50">
                   {label}
-                </motion.span>
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-socc-surface" />
+                </div>
               )}
-            </button>
+            </div>
           );
         })}
       </nav>
@@ -87,9 +96,12 @@ export default function Sidebar({ activeView, onViewChange, lastRefresh, initial
       <div className="px-3 py-3 border-t border-socc-border/20">
         {/* Connection status */}
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+            <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-30" />
+          </div>
           {!collapsed && (
-            <span className="text-[10px] text-gray-500 truncate">Connected</span>
+            <span className="text-[10px] text-green-400/70 font-medium truncate">Connected</span>
           )}
         </div>
         {!collapsed && lastRefresh && (
@@ -110,7 +122,7 @@ export default function Sidebar({ activeView, onViewChange, lastRefresh, initial
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-socc-surface border border-socc-border/50 flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors z-20"
+        className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-socc-surface border border-socc-border/40 shadow-md flex items-center justify-center text-gray-500 hover:text-socc-cyan hover:border-socc-cyan/30 transition-all duration-200 z-20"
       >
         {collapsed ? (
           <ChevronRight className="w-3 h-3" />
