@@ -1,21 +1,28 @@
 /**
- * Lightweight JWT-like token utilities using Node's built-in crypto.
- * No external dependencies — tokens are HMAC-SHA256 signed.
+ * JWT token utilities using jose library (industry-standard, battle-tested).
+ * Provides token generation, verification, and refresh capabilities.
  *
  * Architecture Note:
- * This is the simplest possible token implementation for Phase 4.
- * TODO: Replace with a battle-tested JWT library (e.g. jose) for production.
- * TODO: Add token refresh / rotation for long-lived sessions.
- * TODO: Add token blacklisting for logout invalidation.
+ * - Uses jose library for secure JWT handling
+ * - Supports token refresh via separate refresh tokens
+ * - HMAC-SHA256 signing (HS256 algorithm)
+ * - Environment-based secret management
  */
 
 import crypto from 'crypto';
+import * as jose from 'jose';
 
 /** Generate a secret at startup if none is provided via env */
 const JWT_SECRET = process.env.SOCC_JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
-/** Token expiry: 24 hours */
-const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+/** Convert secret string to Uint8Array for jose */
+const SECRET_KEY = new TextEncoder().encode(JWT_SECRET);
+
+/** Token expiry: 24 hours for access tokens */
+const ACCESS_TOKEN_EXPIRY = '24h';
+
+/** Refresh token expiry: 7 days */
+const REFRESH_TOKEN_EXPIRY = '7d';
 
 export interface TokenPayload {
   username: string;
@@ -24,58 +31,100 @@ export interface TokenPayload {
   exp: number;
 }
 
-function base64url(input: string): string {
-  return Buffer.from(input).toString('base64url');
-}
-
-function fromBase64url(input: string): string {
-  return Buffer.from(input, 'base64url').toString('utf-8');
-}
-
 /**
- * Create a signed token for a user session.
+ * Create a signed access token for a user session.
  */
-export function createToken(username: string, role: 'admin' | 'viewer'): string {
-  const now = Date.now();
-  const payload: TokenPayload = {
+export async function createToken(username: string, role: 'admin' | 'viewer'): Promise<string> {
+  const now = Math.floor(Date.now() / 1000); // JWT uses seconds since epoch
+
+  const token = await new jose.SignJWT({
     username,
     role,
     loginAt: now,
-    exp: now + TOKEN_EXPIRY_MS,
-  };
+  })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuedAt(now)
+    .setExpirationTime(ACCESS_TOKEN_EXPIRY)
+    .sign(SECRET_KEY);
 
-  const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = base64url(JSON.stringify(payload));
-  const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
-    .update(`${header}.${body}`)
-    .digest('base64url');
+  return token;
+}
 
-  return `${header}.${body}.${signature}`;
+/**
+ * Create a refresh token for token rotation.
+ */
+export async function createRefreshToken(username: string, role: 'admin' | 'viewer'): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  const token = await new jose.SignJWT({
+    username,
+    role,
+    type: 'refresh',
+    loginAt: now,
+  })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuedAt(now)
+    .setExpirationTime(REFRESH_TOKEN_EXPIRY)
+    .sign(SECRET_KEY);
+
+  return token;
 }
 
 /**
  * Verify a token and return its payload, or null if invalid/expired.
  */
-export function verifyToken(token: string): TokenPayload | null {
+export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    const { payload } = await jose.jwtVerify(token, SECRET_KEY, {
+      algorithms: ['HS256'],
+    });
 
-    const [header, body, signature] = parts;
-    const expected = crypto
-      .createHmac('sha256', JWT_SECRET)
-      .update(`${header}.${body}`)
-      .digest('base64url');
+    // Convert JWT payload to our TokenPayload format
+    return {
+      username: payload.username as string,
+      role: payload.role as 'admin' | 'viewer',
+      loginAt: payload.loginAt as number,
+      exp: payload.exp as number,
+    };
+  } catch (err) {
+    // Token verification failed (expired, invalid signature, malformed, etc.)
+    return null;
+  }
+}
 
-    if (signature !== expected) return null;
+/**
+ * Verify a refresh token and return its payload, or null if invalid.
+ */
+export async function verifyRefreshToken(token: string): Promise<{ username: string; role: 'admin' | 'viewer' } | null> {
+  try {
+    const { payload } = await jose.jwtVerify(token, SECRET_KEY, {
+      algorithms: ['HS256'],
+    });
 
-    const payload = JSON.parse(fromBase64url(body)) as TokenPayload;
+    // Ensure it's a refresh token
+    if (payload.type !== 'refresh') return null;
 
-    // Check expiry
-    if (payload.exp < Date.now()) return null;
+    return {
+      username: payload.username as string,
+      role: payload.role as 'admin' | 'viewer',
+    };
+  } catch {
+    return null;
+  }
+}
 
-    return payload;
+/**
+ * Decode token without verification (for inspection only, DO NOT trust).
+ */
+export function decodeToken(token: string): TokenPayload | null {
+  try {
+    const decoded = jose.decodeJwt(token);
+    return {
+      username: decoded.username as string,
+      role: decoded.role as 'admin' | 'viewer',
+      loginAt: decoded.loginAt as number,
+      exp: decoded.exp as number,
+    };
   } catch {
     return null;
   }

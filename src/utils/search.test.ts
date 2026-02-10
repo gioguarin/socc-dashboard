@@ -60,6 +60,8 @@ describe('search utilities', () => {
         url: 'https://example.com/1',
         publishedAt: '2024-01-01',
         affectedProducts: ['MySQL', 'PostgreSQL'],
+        status: 'new',
+        cisaKev: true,
       },
       {
         id: '2',
@@ -71,6 +73,8 @@ describe('search utilities', () => {
         url: 'https://example.com/2',
         publishedAt: '2024-01-02',
         affectedProducts: ['WordPress'],
+        status: 'new',
+        cisaKev: false,
       },
     ];
 
@@ -139,21 +143,23 @@ describe('search utilities', () => {
         id: '1',
         title: 'Cloudflare launches new security feature',
         summary: 'Enhanced DDoS protection',
-        source: 'Cloudflare Blog',
-        category: 'CDN',
+        source: 'cloudflare',
+        category: 'product',
         url: 'https://example.com/news1',
         publishedAt: '2024-01-01',
         sentiment: 'positive',
+        status: 'new',
       },
       {
         id: '2',
         title: 'Akamai reports Q4 earnings',
         summary: 'Revenue growth exceeds expectations',
-        source: 'Reuters',
-        category: 'CDN',
+        source: 'akamai',
+        category: 'business',
         url: 'https://example.com/news2',
         publishedAt: '2024-01-02',
         sentiment: 'positive',
+        status: 'new',
       },
     ];
 
@@ -186,8 +192,8 @@ describe('search utilities', () => {
 
     it('formats subtitle with source and category', () => {
       const results = searchNews(mockNews, 'Cloudflare');
-      expect(results[0].subtitle).toContain('Cloudflare Blog');
-      expect(results[0].subtitle).toContain('CDN');
+      expect(results[0].subtitle).toContain('cloudflare');
+      expect(results[0].subtitle).toContain('product');
     });
   });
 
@@ -199,13 +205,8 @@ describe('search utilities', () => {
         price: 120.50,
         change: 2.30,
         changePercent: 1.95,
-        volume: 1000000,
-        marketCap: 19000000000,
-        high: 122.00,
-        low: 118.00,
-        open: 119.00,
-        previousClose: 118.20,
-        history: [],
+        sparkline: [118, 119, 120, 121, 120.5],
+        lastUpdated: '2024-01-01',
       },
       {
         symbol: 'NET',
@@ -213,13 +214,8 @@ describe('search utilities', () => {
         price: 85.20,
         change: -1.50,
         changePercent: -1.73,
-        volume: 500000,
-        marketCap: 28000000000,
-        high: 87.00,
-        low: 84.50,
-        open: 86.70,
-        previousClose: 86.70,
-        history: [],
+        sparkline: [86, 87, 85, 84.5, 85.2],
+        lastUpdated: '2024-01-01',
       },
     ];
 
@@ -268,16 +264,14 @@ describe('search utilities', () => {
         date: '2024-01-01',
         content: 'Daily briefing about security incidents',
         highlights: ['CVE-2024-1234 critical', '3 new threats'],
-        threatCount: 3,
-        newsCount: 5,
+        createdAt: '2024-01-01T06:30:00Z',
       },
       {
         id: '2',
         date: '2024-01-02',
         content: 'Stock market updates and tech news',
         highlights: ['Market up 2%', 'Cloudflare earnings'],
-        threatCount: 1,
-        newsCount: 8,
+        createdAt: '2024-01-02T06:30:00Z',
       },
     ];
 
@@ -330,6 +324,8 @@ describe('search utilities', () => {
           source: 'CISA',
           url: 'https://example.com/1',
           publishedAt: '2024-01-01',
+          status: 'new' as const,
+          cisaKev: true,
         },
       ],
       news: [
@@ -337,11 +333,12 @@ describe('search utilities', () => {
           id: '1',
           title: 'Security update released',
           summary: 'New SQL protection features',
-          source: 'Blog',
-          category: 'Security',
+          source: 'general' as const,
+          category: 'security' as const,
           url: 'https://example.com/news1',
           publishedAt: '2024-01-01',
           sentiment: 'positive' as const,
+          status: 'new' as const,
         },
       ],
       stocks: [
@@ -351,13 +348,8 @@ describe('search utilities', () => {
           price: 100,
           change: 1,
           changePercent: 1,
-          volume: 1000,
-          marketCap: 1000000,
-          high: 101,
-          low: 99,
-          open: 100,
-          previousClose: 99,
-          history: [],
+          sparkline: [99, 100, 101, 100],
+          lastUpdated: '2024-01-01',
         },
       ],
       briefings: [
@@ -366,8 +358,7 @@ describe('search utilities', () => {
           date: '2024-01-01',
           content: 'SQL vulnerability briefing',
           highlights: ['Critical CVE'],
-          threatCount: 1,
-          newsCount: 1,
+          createdAt: '2024-01-01T06:30:00Z',
         },
       ],
     };
@@ -408,6 +399,8 @@ describe('search utilities', () => {
         source: 'Test',
         url: `https://example.com/${i}`,
         publishedAt: '2024-01-01',
+        status: 'new' as const,
+        cisaKev: false,
       }));
 
       const results = searchAll('SQL', { threats: manyThreats });

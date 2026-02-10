@@ -5,7 +5,6 @@
  * session token (via httpOnly cookie or Authorization header).
  * When auth is disabled, all requests pass through unmodified.
  *
- * TODO: Add rate limiting on auth endpoints to prevent brute force.
  * TODO: Add IP-based lockout after N failed attempts.
  * TODO: Support OAuth/SSO bearer tokens from external providers.
  */
@@ -60,7 +59,7 @@ function extractToken(req: Request): string | null {
  * Auth guard middleware. When auth is enabled, rejects unauthenticated requests with 401.
  * Auth endpoints (/api/auth/*) are always exempt.
  */
-export function authGuard(req: Request, res: Response, next: NextFunction): void {
+export async function authGuard(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
 
   // If auth is disabled, pass through
@@ -87,7 +86,7 @@ export function authGuard(req: Request, res: Response, next: NextFunction): void
     return;
   }
 
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
   if (!payload) {
     res.status(401).json({ error: 'Invalid or expired token' });
     return;
@@ -102,9 +101,9 @@ export function authGuard(req: Request, res: Response, next: NextFunction): void
  * Helper to get the current auth user from a request.
  * Works whether auth is enabled or not — returns null when auth is disabled.
  */
-export function getAuthUser(req: Request): TokenPayload | null {
+export async function getAuthUser(req: Request): Promise<TokenPayload | null> {
   // If auth is disabled, try to read token anyway (for user display)
   const token = extractToken(req);
   if (!token) return null;
-  return verifyToken(token);
+  return await verifyToken(token);
 }

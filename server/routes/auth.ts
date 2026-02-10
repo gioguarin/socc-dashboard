@@ -6,13 +6,12 @@
  *
  * TODO: Replace env-var auth with a proper auth provider (OAuth, SSO, LDAP).
  * TODO: Add /api/auth/register for multi-user support.
- * TODO: Add /api/auth/refresh for token rotation.
  * TODO: Add /api/auth/providers for listing available OAuth providers.
  */
 
 import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
-import { createToken, verifyToken } from '../auth/token.js';
+import { createToken, createRefreshToken, verifyToken } from '../auth/token.js';
 
 const router = Router();
 
@@ -25,11 +24,20 @@ const COOKIE_OPTIONS = {
   path: '/',
 };
 
+/** Cookie options for refresh token (7 days) */
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: '/api/auth',
+};
+
 /**
  * GET /api/auth/status
  * Returns whether auth is enabled and the current user (if authenticated).
  */
-router.get('/status', (req: Request, res: Response) => {
+router.get('/status', async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
 
   // Try to read existing session
@@ -46,7 +54,7 @@ router.get('/status', (req: Request, res: Response) => {
 
     const token = cookies['socc_token'];
     if (token) {
-      const payload = verifyToken(token);
+      const payload = await verifyToken(token);
       if (payload) {
         user = {
           username: payload.username,
@@ -65,7 +73,7 @@ router.get('/status', (req: Request, res: Response) => {
  * Authenticate with username/password.
  * Credentials are validated against SOCC_ADMIN_USER and SOCC_ADMIN_PASS env vars.
  */
-router.post('/login', (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response) => {
   const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
   if (!authEnabled) {
     res.status(400).json({ error: 'Authentication is not enabled' });
@@ -105,17 +113,19 @@ router.post('/login', (req: Request, res: Response) => {
     return;
   }
 
-  // Create session token — admin role for env-var user
-  const token = createToken(username, 'admin');
+  // Create session tokens — admin role for env-var user
+  const token = await createToken(username, 'admin');
+  const refreshToken = await createRefreshToken(username, 'admin');
 
-  // Set httpOnly cookie
+  // Set httpOnly cookies
   res.cookie('socc_token', token, COOKIE_OPTIONS);
+  res.cookie('socc_refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS);
 
   res.json({
     user: {
       username,
       role: 'admin' as const,
-      loginAt: Date.now(),
+      loginAt: Math.floor(Date.now() / 1000),
     },
   });
 });
@@ -126,7 +136,64 @@ router.post('/login', (req: Request, res: Response) => {
  */
 router.post('/logout', (_req: Request, res: Response) => {
   res.clearCookie('socc_token', { path: '/' });
+  res.clearCookie('socc_refresh_token', { path: '/api/auth' });
   res.json({ success: true });
+});
+
+/**
+ * POST /api/auth/refresh
+ * Refresh an expired access token using a valid refresh token.
+ */
+router.post('/refresh', async (req: Request, res: Response) => {
+  const authEnabled = process.env.SOCC_AUTH_ENABLED === 'true';
+  if (!authEnabled) {
+    res.status(400).json({ error: 'Authentication is not enabled' });
+    return;
+  }
+
+  // Extract refresh token from cookie
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) {
+    res.status(401).json({ error: 'No refresh token found' });
+    return;
+  }
+
+  const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc, c) => {
+    const eqIdx = c.indexOf('=');
+    if (eqIdx !== -1) {
+      acc[c.substring(0, eqIdx).trim()] = c.substring(eqIdx + 1).trim();
+    }
+    return acc;
+  }, {});
+
+  const refreshToken = cookies['socc_refresh_token'];
+  if (!refreshToken) {
+    res.status(401).json({ error: 'No refresh token found' });
+    return;
+  }
+
+  // Verify refresh token
+  const { verifyRefreshToken } = await import('../auth/token.js');
+  const payload = await verifyRefreshToken(refreshToken);
+
+  if (!payload) {
+    res.status(401).json({ error: 'Invalid or expired refresh token' });
+    return;
+  }
+
+  // Create new access token
+  const newToken = await createToken(payload.username, payload.role);
+
+  // Set new access token cookie
+  res.cookie('socc_token', newToken, COOKIE_OPTIONS);
+
+  res.json({
+    user: {
+      username: payload.username,
+      role: payload.role,
+      loginAt: Math.floor(Date.now() / 1000),
+    },
+  });
 });
 
 export default router;
