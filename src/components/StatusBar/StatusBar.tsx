@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Activity, Shield, Newspaper, TrendingUp, FileText } from 'lucide-react';
+import { Activity, Shield, Newspaper } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { REFRESH_INTERVAL } from '../../utils/constants';
 import type { ThreatItem, NewsItem } from '../../types';
@@ -35,7 +35,7 @@ export default function StatusBar() {
   }
 
   return (
-    <div className="h-7 bg-socc-surface/80 border-t border-socc-border/30 flex items-center justify-between px-4 text-[10px] text-gray-500 font-mono">
+    <div className="h-8 bg-socc-surface/90 backdrop-blur-sm border-t border-socc-border/20 flex items-center justify-between px-4 text-[10px] text-gray-500 font-mono">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <Activity className="w-3 h-3 text-socc-cyan" />
@@ -43,11 +43,16 @@ export default function StatusBar() {
         </div>
         {feeds.map((feed) => (
           <div key={feed.name} className="flex items-center gap-1.5">
-            <div
-              className={`w-1.5 h-1.5 rounded-full ${
-                feed.error ? 'bg-red-500' : feed.lastFetched ? 'bg-green-500 animate-pulse' : 'bg-gray-600'
-              }`}
-            />
+            <div className="relative">
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${
+                  feed.error ? 'bg-red-500' : feed.lastFetched ? 'bg-green-500' : 'bg-gray-600'
+                }`}
+              />
+              {!feed.error && feed.lastFetched && (
+                <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-green-500 animate-ping opacity-30" />
+              )}
+            </div>
             {feed.icon}
             <span>
               {feed.name}: {feed.error ? 'error' : formatFeedTime(feed.lastFetched)}
@@ -62,7 +67,9 @@ export default function StatusBar() {
             {totalUnreviewed} unreviewed item{totalUnreviewed !== 1 ? 's' : ''}
           </span>
         )}
-        <span className="text-gray-600">SOCC Dashboard v1.0</span>
+        <span className="text-[10px] text-gray-600 px-2 py-0.5 rounded-full bg-socc-bg/50 border border-socc-border/20">
+          SOCC v1.0
+        </span>
       </div>
     </div>
   );

@@ -17,16 +17,16 @@ export function ThemeSelector() {
   const { theme, setTheme } = useThemeContext();
 
   return (
-    <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-socc-bg/60 border border-socc-border/30">
+    <div className="flex items-center gap-0.5 p-1 rounded-lg bg-socc-bg/80 border border-socc-border/40">
       {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
           onClick={() => setTheme(value)}
           className={`
-            p-1.5 rounded-md transition-all duration-150 relative
+            p-1.5 rounded-md transition-all duration-200 relative
             ${theme === value
-              ? 'bg-socc-cyan/10 text-socc-cyan'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'bg-socc-cyan/15 text-socc-cyan shadow-sm shadow-socc-cyan/10'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-socc-hover/50'
             }
           `}
           title={`${label} theme`}
