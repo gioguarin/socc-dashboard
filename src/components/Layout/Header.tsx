@@ -22,8 +22,10 @@ export default function Header({ onNavigate, onToggleSettings, onTogglePreferenc
   const threats = useApiWithAnomaly<ThreatItem[]>('/api/threats', REFRESH_INTERVAL);
   const news = useApiWithAnomaly<NewsItem[]>('/api/news', REFRESH_INTERVAL);
 
-  const newThreats = threats.data?.filter((t) => t.status === 'new').length || 0;
-  const newNews = news.data?.filter((n) => n.status === 'new').length || 0;
+  /* Count items from the last 24 hours as actionable notifications */
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const newThreats = threats.data?.filter((t) => new Date(t.publishedAt).getTime() > oneDayAgo).length || 0;
+  const newNews = news.data?.filter((n) => new Date(n.publishedAt).getTime() > oneDayAgo).length || 0;
   const notifCount = newThreats + newNews;
 
   useEffect(() => {

@@ -136,8 +136,8 @@ export default function NewsCard({ item }: NewsCardProps) {
         )}
       </AnimatePresence>
 
-      {/* New indicator dot */}
-      {item.status === 'new' && (
+      {/* Recent indicator dot — published within last 24h */}
+      {Date.now() - new Date(item.publishedAt).getTime() < 24 * 60 * 60 * 1000 && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[3px]">
           <div className="w-2 h-2 rounded-full bg-socc-cyan" />
           <div className="absolute inset-0 w-2 h-2 rounded-full bg-socc-cyan animate-ping opacity-40" />

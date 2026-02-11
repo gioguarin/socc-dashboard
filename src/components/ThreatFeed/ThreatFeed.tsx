@@ -36,7 +36,8 @@ export default function ThreatFeed({ compact = false, maxItems, onViewAll }: Thr
     return result;
   }, [threats, severityFilter, statusFilter, maxItems]);
 
-  const newCount = threats?.filter((t) => t.status === 'new').length || 0;
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const newCount = threats?.filter((t) => new Date(t.publishedAt).getTime() > oneDayAgo).length || 0;
   const kevCount = threats?.filter((t) => t.cisaKev).length || 0;
 
   return (

@@ -23,9 +23,11 @@ export default function StatusBar() {
     [threats.lastFetched, threats.error, news.lastFetched, news.error]
   );
 
-  const unreviewedThreats = threats.data?.filter((t) => t.status === 'new').length || 0;
-  const unreviewedNews = news.data?.filter((n) => n.status === 'new').length || 0;
-  const totalUnreviewed = unreviewedThreats + unreviewedNews;
+  /* Count items published in the last 24 hours as "recent" */
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const recentThreats = threats.data?.filter((t) => new Date(t.publishedAt).getTime() > oneDayAgo).length || 0;
+  const recentNews = news.data?.filter((n) => new Date(n.publishedAt).getTime() > oneDayAgo).length || 0;
+  const totalRecent = recentThreats + recentNews;
 
   function formatFeedTime(date: Date | null): string {
     if (!date) return 'pending';
@@ -62,9 +64,9 @@ export default function StatusBar() {
       </div>
 
       <div className="flex items-center gap-4">
-        {totalUnreviewed > 0 && (
+        {totalRecent > 0 && (
           <span className="text-amber-400">
-            {totalUnreviewed} unreviewed item{totalUnreviewed !== 1 ? 's' : ''}
+            {totalRecent} new in last 24h
           </span>
         )}
         <span className="text-[10px] text-gray-600 px-2 py-0.5 rounded-full bg-socc-bg/50 border border-socc-border/20">

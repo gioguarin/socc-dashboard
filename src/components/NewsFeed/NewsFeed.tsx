@@ -29,7 +29,8 @@ export default function NewsFeed({ compact = false, maxItems, onViewAll }: NewsF
     return result;
   }, [news, sourceFilter, maxItems]);
 
-  const newCount = news?.filter((n) => n.status === 'new').length || 0;
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const newCount = news?.filter((n) => new Date(n.publishedAt).getTime() > oneDayAgo).length || 0;
 
   return (
     <div className="flex flex-col h-full">
