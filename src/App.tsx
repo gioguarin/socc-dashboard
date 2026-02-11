@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { View } from './types';
 import { useAuth } from './auth/AuthContext';
@@ -53,58 +53,33 @@ export default function App() {
     onNavigate: setActiveView,
   });
 
+  /* Shared wrapper for full-page views — padding on outer div avoids h-full + margin overflow */
+  const ViewPanel = ({ panelName, children }: { panelName: string; children: ReactNode }) => (
+    <div className="h-full p-4">
+      <div className="h-full bg-socc-card/20 rounded-2xl border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
+        <ErrorBoundary panelName={panelName}>
+          {children}
+        </ErrorBoundary>
+      </div>
+    </div>
+  );
+
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
         return <DashboardView onNavigate={setActiveView} visiblePanels={preferences.visiblePanels} />;
       case 'threats':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="Threat Intel">
-              <ThreatFeed />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="Threat Intel"><ThreatFeed /></ViewPanel>;
       case 'news':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="News Feed">
-              <NewsFeed />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="News Feed"><NewsFeed /></ViewPanel>;
       case 'stocks':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="Stock Tracker">
-              <StockTracker />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="Stock Tracker"><StockTracker /></ViewPanel>;
       case 'briefings':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="Briefings">
-              <BriefingPanel />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="Briefings"><BriefingPanel /></ViewPanel>;
       case 'notes':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="Shift Notes">
-              <ShiftNotes />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="Shift Notes"><ShiftNotes /></ViewPanel>;
       case 'projects':
-        return (
-          <div className="h-full bg-socc-card/20 rounded-2xl m-4 border border-socc-border/20 shadow-[var(--socc-card-shadow)] overflow-hidden">
-            <ErrorBoundary panelName="Projects">
-              <ProjectTracker />
-            </ErrorBoundary>
-          </div>
-        );
+        return <ViewPanel panelName="Projects"><ProjectTracker /></ViewPanel>;
     }
   };
 

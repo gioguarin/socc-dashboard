@@ -77,7 +77,11 @@ export default function Header({ onNavigate, onToggleSettings, onTogglePreferenc
       {/* Right */}
       <div className="flex items-center gap-2">
         <GlobalSearch onNavigate={onNavigate} />
-        <button className="relative p-2 rounded-lg hover:bg-socc-hover/80 transition-all duration-200 text-gray-400 hover:text-gray-200">
+        <button
+          onClick={() => onNavigate('threats')}
+          className="relative p-2 rounded-lg hover:bg-socc-hover/80 transition-all duration-200 text-gray-400 hover:text-gray-200"
+          title={notifCount > 0 ? `${notifCount} unreviewed items` : 'No new alerts'}
+        >
           <Bell className="w-4 h-4" />
           {notifCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-1 ring-2 ring-socc-surface">

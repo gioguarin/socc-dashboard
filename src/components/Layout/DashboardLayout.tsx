@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import type { View } from '../../types';
 import Header from './Header';
 import StatusBar from '../StatusBar/StatusBar';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 
 interface DashboardLayoutProps {
   sidebar: ReactNode;
@@ -32,7 +33,9 @@ export default function DashboardLayout({
         {sidebar}
         <main className="flex-1 overflow-hidden">{children}</main>
       </div>
-      <StatusBar />
+      <ErrorBoundary panelName="Status Bar">
+        <StatusBar />
+      </ErrorBoundary>
     </div>
   );
 }

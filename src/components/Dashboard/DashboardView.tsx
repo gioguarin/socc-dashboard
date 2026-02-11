@@ -39,32 +39,32 @@ function mkItem(i: string, x: number, y: number, w: number, h: number, minW = 1,
 
 const DEFAULT_LAYOUTS: ResponsiveLayouts = {
   lg: [
-    mkItem('threats', 0, 0, 2, 4, 1, 3),
+    mkItem('threats', 0, 0, 2, 6, 1, 3),
     mkItem('calendar', 2, 0, 1, 4, 1, 3),
-    mkItem('news', 0, 4, 2, 3),
-    mkItem('quicklinks', 2, 4, 1, 3),
-    mkItem('stocks', 0, 7, 1, 3),
-    mkItem('briefings', 1, 7, 2, 3),
+    mkItem('quicklinks', 2, 4, 1, 2),
+    mkItem('news', 0, 6, 2, 5),
+    mkItem('stocks', 2, 6, 1, 5),
+    mkItem('briefings', 0, 11, 3, 4),
   ],
   md: [
-    mkItem('threats', 0, 0, 2, 4, 1, 3),
-    mkItem('calendar', 0, 4, 1, 3),
-    mkItem('news', 0, 7, 2, 3),
-    mkItem('quicklinks', 1, 4, 1, 3),
-    mkItem('stocks', 0, 10, 1, 3),
-    mkItem('briefings', 1, 10, 1, 3),
+    mkItem('threats', 0, 0, 2, 5, 1, 3),
+    mkItem('calendar', 0, 5, 1, 3),
+    mkItem('quicklinks', 1, 5, 1, 3),
+    mkItem('news', 0, 8, 2, 4),
+    mkItem('stocks', 0, 12, 1, 4),
+    mkItem('briefings', 1, 12, 1, 4),
   ],
   sm: [
-    mkItem('threats', 0, 0, 1, 4, 1, 3),
-    mkItem('calendar', 0, 4, 1, 3),
-    mkItem('news', 0, 7, 1, 3),
-    mkItem('quicklinks', 0, 10, 1, 3),
-    mkItem('stocks', 0, 13, 1, 3),
-    mkItem('briefings', 0, 16, 1, 3),
+    mkItem('threats', 0, 0, 1, 5, 1, 3),
+    mkItem('calendar', 0, 5, 1, 3),
+    mkItem('news', 0, 8, 1, 4),
+    mkItem('quicklinks', 0, 12, 1, 3),
+    mkItem('stocks', 0, 15, 1, 4),
+    mkItem('briefings', 0, 19, 1, 4),
   ],
 };
 
-const LAYOUT_STORAGE_KEY = 'socc-dashboard-layout';
+const LAYOUT_STORAGE_KEY = 'socc-dashboard-layout-v2';
 
 export default function DashboardView({ onNavigate, visiblePanels }: DashboardViewProps) {
   const panels = visiblePanels ?? ALL_PANELS;

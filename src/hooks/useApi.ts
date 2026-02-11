@@ -20,8 +20,8 @@ export function useApi<T>(url: string, refreshInterval?: number): UseApiResult<T
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const json = await response.json();
-      /* Unwrap standardized API responses { success, data, anomaly? } */
-      const payload = json != null && typeof json === 'object' && 'success' in json && 'data' in json
+      /* Unwrap API responses that wrap the payload in a `data` key (e.g. { data, anomaly } or { success, data }) */
+      const payload = json != null && typeof json === 'object' && !Array.isArray(json) && 'data' in json
         ? json.data
         : json;
       setData(payload);
