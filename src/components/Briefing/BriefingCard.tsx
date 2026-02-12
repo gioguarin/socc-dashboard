@@ -12,10 +12,11 @@ interface BriefingCardProps {
 
 function renderMarkdown(text: string): string {
   return text
+    .replace(/^---$/gm, '<hr class="border-socc-border/30 my-4" />')
     .replace(/^### (.+)$/gm, '<h4 class="text-xs font-semibold text-socc-cyan uppercase tracking-wider mt-4 mb-2">$1</h4>')
     .replace(/^## (.+)$/gm, '<h3 class="text-sm font-semibold text-gray-200 mt-3 mb-2">$1</h3>')
-    .replace(/^\*\*(.+?)\*\*/gm, '<strong class="text-gray-200">$1</strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-gray-200">$1</strong>')
+    .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em class="text-gray-300 not-italic">$1</em>')
     .replace(/^- (.+)$/gm, '<li class="text-xs text-gray-400 ml-3 mb-0.5 list-disc list-inside">$1</li>')
     .replace(/^\d+\. (.+)$/gm, '<li class="text-xs text-gray-400 ml-3 mb-0.5 list-decimal list-inside">$1</li>')
     .replace(/\n\n/g, '<br/>')

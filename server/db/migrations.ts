@@ -86,6 +86,21 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: 5,
+    name: 'create_briefings',
+    sql: `
+      CREATE TABLE IF NOT EXISTS briefings (
+        id TEXT PRIMARY KEY,
+        date TEXT NOT NULL,
+        content TEXT NOT NULL,
+        highlights TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_briefings_date ON briefings(date);
+      CREATE INDEX IF NOT EXISTS idx_briefings_created ON briefings(created_at);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

@@ -1,130 +1,16 @@
 import { Router } from 'express';
-import { readDataFile } from '../utils.js';
-import { sendSuccess, sendServerError } from '../utils/response.js';
+import { sendSuccess, sendBadRequest, sendServerError } from '../utils/response.js';
+import { buildBriefing } from '../briefing/generator.js';
+import { saveBriefing, getAllBriefings } from '../briefing/store.js';
 
 const router = Router();
-
-interface ThreatItem {
-  title: string;
-  severity: string;
-  cvssScore: number | null;
-  source: string;
-  publishedAt: string;
-  cisaKev: boolean;
-  cveId: string | null;
-}
-
-interface NewsItem {
-  title: string;
-  source: string;
-  publishedAt: string;
-  category?: string;
-}
-
-interface Briefing {
-  id: string;
-  date: string;
-  content: string;
-  highlights: string[];
-  createdAt: string;
-}
-
-/** Build a daily briefing from current threat + news data */
-function generateBriefing(threats: ThreatItem[], news: NewsItem[]): Briefing {
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const oneDayAgo = now.getTime() - 24 * 60 * 60 * 1000;
-
-  const recentThreats = threats
-    .filter((t) => new Date(t.publishedAt).getTime() > oneDayAgo)
-    .sort((a, b) => {
-      const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-      return (severityOrder[a.severity] ?? 5) - (severityOrder[b.severity] ?? 5);
-    });
-
-  const recentNews = news
-    .filter((n) => new Date(n.publishedAt).getTime() > oneDayAgo)
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-  const kevItems = threats.filter((t) => t.cisaKev);
-  const criticalCount = threats.filter((t) => t.severity === 'critical').length;
-  const highCount = threats.filter((t) => t.severity === 'high').length;
-
-  // Build highlights
-  const highlights: string[] = [];
-  highlights.push(`${threats.length} tracked threats (${criticalCount} critical, ${highCount} high)`);
-  if (kevItems.length > 0) {
-    highlights.push(`${kevItems.length} CISA KEV entries in feed`);
-  }
-  highlights.push(`${recentThreats.length} new threats in last 24h`);
-  highlights.push(`${recentNews.length} news articles in last 24h`);
-  highlights.push(`${news.length} total news items across all sources`);
-
-  // Build markdown content
-  const lines: string[] = [];
-  lines.push(`## Daily Security Briefing — ${today}`);
-  lines.push('');
-
-  // Threat summary
-  lines.push('### Threat Landscape');
-  lines.push(`Tracking **${threats.length}** threats: **${criticalCount}** critical, **${highCount}** high severity.`);
-  if (kevItems.length > 0) {
-    lines.push(`**${kevItems.length}** items flagged in CISA Known Exploited Vulnerabilities catalog.`);
-  }
-  lines.push('');
-
-  // Top threats
-  if (recentThreats.length > 0) {
-    lines.push('### Recent Threats');
-    const topThreats = recentThreats.slice(0, 5);
-    for (const t of topThreats) {
-      const cvss = t.cvssScore ? ` (CVSS ${t.cvssScore})` : '';
-      const cve = t.cveId ? ` — ${t.cveId}` : '';
-      lines.push(`- **[${t.severity.toUpperCase()}]** ${t.title}${cvss}${cve}`);
-    }
-    if (recentThreats.length > 5) {
-      lines.push(`- *...and ${recentThreats.length - 5} more*`);
-    }
-    lines.push('');
-  }
-
-  // News summary
-  if (recentNews.length > 0) {
-    lines.push('### Industry News');
-    // Group by source
-    const bySource = new Map<string, number>();
-    for (const n of recentNews) {
-      bySource.set(n.source, (bySource.get(n.source) || 0) + 1);
-    }
-    const sourceEntries = [...bySource.entries()].sort((a, b) => b[1] - a[1]);
-    for (const [source, count] of sourceEntries.slice(0, 6)) {
-      lines.push(`- **${source}**: ${count} article${count !== 1 ? 's' : ''}`);
-    }
-    lines.push('');
-
-    // Top headlines
-    lines.push('### Top Headlines');
-    for (const n of recentNews.slice(0, 5)) {
-      lines.push(`- ${n.title} *(${n.source})*`);
-    }
-    lines.push('');
-  }
-
-  return {
-    id: `briefing-${today}`,
-    date: today,
-    content: lines.join('\n'),
-    highlights,
-    createdAt: now.toISOString(),
-  };
-}
 
 /**
  * @swagger
  * /api/briefings:
  *   get:
- *     summary: Get morning briefings
- *     description: Returns daily security briefings with highlights
+ *     summary: Get all briefings
+ *     description: Returns daily security briefings from SQLite, most recent first
  *     tags: [Briefings]
  *     responses:
  *       200:
@@ -143,22 +29,57 @@ function generateBriefing(threats: ThreatItem[], news: NewsItem[]): Briefing {
  *       500:
  *         description: Server error
  */
-router.get('/', (_req, res) => {
+router.get('/', async (_req, res) => {
   try {
-    const saved = readDataFile<Briefing[]>('briefings.json', []);
+    let briefings = getAllBriefings();
 
-    // Auto-generate a briefing from current data if none exist
-    if (saved.length === 0) {
-      const threats = readDataFile<ThreatItem[]>('threats.json', []);
-      const news = readDataFile<NewsItem[]>('news.json', []);
-      const generated = generateBriefing(threats, news);
-      sendSuccess(res, [generated]);
-      return;
+    // Auto-generate one on first visit so the panel isn't empty
+    if (briefings.length === 0) {
+      const generated = await buildBriefing();
+      saveBriefing(generated);
+      briefings = [generated];
     }
 
-    sendSuccess(res, saved);
+    sendSuccess(res, briefings);
   } catch {
-    sendServerError(res, 'Failed to read briefings data');
+    sendServerError(res, 'Failed to read briefings');
+  }
+});
+
+/**
+ * @swagger
+ * /api/briefings/generate:
+ *   post:
+ *     summary: Generate a new briefing
+ *     description: Generates a rich security briefing from current data and stores it
+ *     tags: [Briefings]
+ *     responses:
+ *       201:
+ *         description: Briefing created
+ *       400:
+ *         description: Cooldown not elapsed
+ *       500:
+ *         description: Server error
+ */
+router.post('/generate', async (_req, res) => {
+  try {
+    // 60-second cooldown between generations
+    const recent = getAllBriefings(1);
+    if (recent.length > 0) {
+      const lastCreated = new Date(recent[0].createdAt).getTime();
+      const cooldownMs = 60_000;
+      if (Date.now() - lastCreated < cooldownMs) {
+        const remaining = Math.ceil((cooldownMs - (Date.now() - lastCreated)) / 1000);
+        sendBadRequest(res, `Please wait ${remaining}s before generating another briefing`);
+        return;
+      }
+    }
+
+    const briefing = await buildBriefing();
+    saveBriefing(briefing);
+    sendSuccess(res, briefing, { status: 201 });
+  } catch {
+    sendServerError(res, 'Failed to generate briefing');
   }
 });
 
