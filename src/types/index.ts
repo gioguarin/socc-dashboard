@@ -38,6 +38,33 @@ export interface StockData {
   lastUpdated: string;
 }
 
+export interface StockEarnings {
+  lastEarningsDate: string | null;
+  nextEarningsDate: string | null;
+  lastEarningsEps: number | null;
+  lastEarningsRevenue: number | null;
+}
+
+export interface StockDetailData {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  range: string;
+  sparkline: number[];
+  timestamps: number[];
+  high52w: number | null;
+  low52w: number | null;
+  marketCap: number | null;
+  volume: number | null;
+  avgVolume: number | null;
+  earnings: StockEarnings;
+  lastUpdated: string;
+}
+
+export type StockRange = '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | 'max';
+
 export interface Briefing {
   id: string;
   date: string;
