@@ -10,10 +10,12 @@
 
 import type { AuthAdapter, AuthStatus, LoginCredentials, LoginResult } from '../types';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export class ApiAuthAdapter implements AuthAdapter {
   async getStatus(): Promise<AuthStatus> {
     try {
-      const res = await fetch('/api/auth/status', { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/auth/status`, { credentials: 'include' });
       if (!res.ok) {
         return { authEnabled: false, user: null };
       }
@@ -26,7 +28,7 @@ export class ApiAuthAdapter implements AuthAdapter {
 
   async login(credentials: LoginCredentials): Promise<LoginResult> {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -56,7 +58,7 @@ export class ApiAuthAdapter implements AuthAdapter {
 
   async logout(): Promise<void> {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

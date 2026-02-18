@@ -100,9 +100,9 @@ export default function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             setTimeout(() => setFocused(false), 200);
           }}
           placeholder="Search… ( / )"
-          className="w-48 lg:w-64 h-7 pl-8 pr-7 text-xs bg-socc-surface/80 border border-socc-border/40 rounded-md
+          className="w-28 sm:w-48 lg:w-64 h-8 sm:h-7 pl-8 pr-7 text-xs bg-socc-surface/80 border border-socc-border/40 rounded-md
             text-gray-300 placeholder:text-gray-600
-            focus:outline-none focus:border-socc-cyan/40 focus:w-72 transition-all duration-200"
+            focus:outline-none focus:border-socc-cyan/40 sm:focus:w-72 transition-all duration-200"
         />
         {query && (
           <button
@@ -121,7 +121,7 @@ export default function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-1 right-0 w-96 max-h-80 overflow-y-auto
+            className="fixed sm:absolute top-14 sm:top-full left-2 right-2 sm:left-auto sm:right-0 mt-0 sm:mt-1 sm:w-96 max-h-[60vh] sm:max-h-80 overflow-y-auto
               bg-socc-surface border border-socc-border/50 rounded-lg shadow-xl z-50"
           >
             {results.length === 0 ? (

@@ -4,7 +4,7 @@ import {
   useContainerWidth,
 } from 'react-grid-layout';
 import type { LayoutItem, Layout, ResponsiveLayouts } from 'react-grid-layout';
-import { RotateCcw, GripVertical } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
 import type { View } from '../../types';
 import type { DashboardPanel } from '../../auth/types';
 import { ErrorBoundary } from '../common/ErrorBoundary';
@@ -65,14 +65,30 @@ const DEFAULT_LAYOUTS: ResponsiveLayouts = {
 };
 
 const LAYOUT_STORAGE_KEY = 'socc-dashboard-layout-v2';
+const COLLAPSED_STORAGE_KEY = 'socc-dashboard-collapsed-panels';
 
 export default function DashboardView({ onNavigate, visiblePanels }: DashboardViewProps) {
   const panels = visiblePanels ?? ALL_PANELS;
   const [savedLayouts, setSavedLayouts] = useLocalStorage<ResponsiveLayouts>(LAYOUT_STORAGE_KEY, DEFAULT_LAYOUTS);
   const [layouts, setLayouts] = useState<ResponsiveLayouts>(savedLayouts);
   const [isEdited, setIsEdited] = useState(false);
+  const [savedCollapsed, setSavedCollapsed] = useLocalStorage<string[]>(COLLAPSED_STORAGE_KEY, []);
+  const [collapsedPanels, setCollapsedPanels] = useState<Set<string>>(new Set(savedCollapsed));
 
   const { containerRef, width } = useContainerWidth({ initialWidth: 1200 });
+
+  const toggleCollapse = useCallback((panel: string) => {
+    setCollapsedPanels((prev) => {
+      const next = new Set(prev);
+      if (next.has(panel)) {
+        next.delete(panel);
+      } else {
+        next.add(panel);
+      }
+      setSavedCollapsed(Array.from(next));
+      return next;
+    });
+  }, [setSavedCollapsed]);
 
   // Filter layouts to only include visible panels
   const filteredLayouts = useMemo(() => {
@@ -175,25 +191,36 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
         margin={[12, 12]}
         containerPadding={[4, 4]}
         onLayoutChange={handleLayoutChange}
-        dragConfig={{ handle: '.drag-handle' }}
       >
-        {panels.map((panel) => (
-          <div
-            key={panel}
-            className="bg-socc-card/30 border border-socc-border/20 rounded-2xl overflow-hidden
-              hover:border-socc-border/40 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300 group"
-          >
-            {/* Drag handle */}
-            <div className="drag-handle absolute top-0 left-0 right-0 h-7 z-10 cursor-grab active:cursor-grabbing
-              flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-b-lg bg-socc-surface/90 backdrop-blur-sm border border-t-0 border-socc-border/30 shadow-sm">
-                <GripVertical className="w-3 h-3 text-socc-cyan/60" />
-                <span className="text-[9px] text-gray-400 font-semibold tracking-wider uppercase">{PANEL_LABELS[panel]}</span>
-              </div>
+        {panels.map((panel) => {
+          const isCollapsed = collapsedPanels.has(panel);
+          return (
+            <div
+              key={panel}
+              className="bg-socc-card/30 border border-socc-border/20 rounded-2xl overflow-hidden
+                hover:border-socc-border/40 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300"
+            >
+              {/* Collapsible header bar */}
+              <button
+                onClick={() => toggleCollapse(panel)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left bg-socc-surface/40 border-b border-socc-border/10 hover:bg-socc-surface/60 transition-colors"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                )}
+                <span className="text-[11px] text-gray-400 font-semibold tracking-wider uppercase">{PANEL_LABELS[panel]}</span>
+              </button>
+              {/* Panel content — hidden when collapsed */}
+              {!isCollapsed && (
+                <div className="h-[calc(100%-36px)] overflow-hidden">
+                  {renderPanel(panel)}
+                </div>
+              )}
             </div>
-            {renderPanel(panel)}
-          </div>
-        ))}
+          );
+        })}
       </ResponsiveGridLayout>
     </div>
   );

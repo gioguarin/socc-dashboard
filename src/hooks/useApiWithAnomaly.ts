@@ -5,6 +5,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export interface AnomalyInfo {
   detected: boolean;
   type: string;
@@ -37,7 +39,7 @@ export function useApiWithAnomaly<T>(url: string, refreshInterval?: number): Use
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch(url);
+      const response = await fetch(`${API_BASE}${url}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const json = await response.json();
 

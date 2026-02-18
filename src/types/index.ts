@@ -94,7 +94,32 @@ export interface SearchResult {
   view: View;
 }
 
-export type View = 'dashboard' | 'threats' | 'news' | 'stocks' | 'briefings' | 'notes' | 'projects';
+export type View = 'dashboard' | 'threats' | 'news' | 'stocks' | 'briefings' | 'notes' | 'projects' | 'calendar';
+
+export type CalendarTimeRange = '12h' | '24h' | '72h' | '1w' | '30d';
+
+export interface CalendarSource {
+  id: string;
+  name: string;
+  url: string | null;
+  color: string;
+  enabled: boolean;
+  lastSynced: string | null;
+  type: 'ics-url' | 'ics-file' | 'manual';
+}
+
+export interface ParsedCalendarEvent {
+  id: string;
+  uid: string;
+  title: string;
+  description: string;
+  location: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  sourceId: string;
+  color: string;
+}
 
 /* ── Phase 3: Personal Ops ── */
 

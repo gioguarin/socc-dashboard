@@ -26,7 +26,6 @@ interface DigestConfig {
 
 const DEFAULT_CONFIG: DigestConfig = {
   sections: [
-    { id: 'weather', label: 'Weather', description: 'Local weather forecast', enabled: true },
     { id: 'threats', label: 'Threat Intel', description: 'Critical CVEs and CISA KEV alerts', enabled: true },
     { id: 'news', label: 'Industry News', description: 'Vendor news and security updates', enabled: true },
     { id: 'stocks', label: 'Stock Summary', description: 'Tracked vendor stock movements', enabled: true },
