@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { FileText, Download, Printer, RefreshCw } from 'lucide-react';
+import { FileText, Download, Printer } from 'lucide-react';
 import { Briefing } from '../../types';
 import { useApi } from '../../hooks/useApi';
 import { REFRESH_INTERVAL } from '../../utils/constants';
@@ -16,26 +15,7 @@ interface BriefingPanelProps {
 }
 
 export default function BriefingPanel({ compact = false, maxItems, onViewAll }: BriefingPanelProps) {
-  const { data: briefings, loading, refetch } = useApi<Briefing[]>('/api/briefings', REFRESH_INTERVAL);
-  const [generating, setGenerating] = useState(false);
-  const [genError, setGenError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    setGenError(null);
-    try {
-      const res = await fetch('/api/briefings/generate', { method: 'POST' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error?.message ?? `HTTP ${res.status}`);
-      }
-      refetch();
-    } catch (err) {
-      setGenError(err instanceof Error ? err.message : 'Generation failed');
-    } finally {
-      setGenerating(false);
-    }
-  };
+  const { data: briefings, loading } = useApi<Briefing[]>('/api/briefings', REFRESH_INTERVAL);
 
   const sorted = briefings
     ? [...briefings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -57,21 +37,6 @@ export default function BriefingPanel({ compact = false, maxItems, onViewAll }: 
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          {/* Generate new briefing */}
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold
-              bg-socc-cyan/10 text-socc-cyan border border-socc-cyan/20
-              hover:bg-socc-cyan/20 hover:border-socc-cyan/40
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-all duration-200"
-            title="Generate new briefing from current data"
-          >
-            <RefreshCw className={`w-3 h-3 ${generating ? 'animate-spin' : ''}`} />
-            {generating ? 'Generating...' : 'Generate'}
-          </button>
-
           {!compact && latestBriefing && (
             <>
               <button
@@ -101,13 +66,6 @@ export default function BriefingPanel({ compact = false, maxItems, onViewAll }: 
           )}
         </div>
       </div>
-
-      {/* Generation error */}
-      {genError && (
-        <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
-          {genError}
-        </div>
-      )}
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
         {loading ? (

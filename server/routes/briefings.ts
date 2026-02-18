@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { sendSuccess, sendBadRequest, sendServerError } from '../utils/response.js';
 import { buildBriefing } from '../briefing/generator.js';
-import { saveBriefing, getAllBriefings } from '../briefing/store.js';
+import { saveBriefing, getAllBriefings, deleteBriefing } from '../briefing/store.js';
 
 const router = Router();
 
@@ -80,6 +80,20 @@ router.post('/generate', async (_req, res) => {
     sendSuccess(res, briefing, { status: 201 });
   } catch {
     sendServerError(res, 'Failed to generate briefing');
+  }
+});
+
+/** DELETE /api/briefings/:id — Remove a briefing */
+router.delete('/:id', (_req, res) => {
+  try {
+    const deleted = deleteBriefing(_req.params.id);
+    if (!deleted) {
+      sendBadRequest(res, 'Briefing not found');
+      return;
+    }
+    sendSuccess(res, { deleted: true });
+  } catch {
+    sendServerError(res, 'Failed to delete briefing');
   }
 });
 

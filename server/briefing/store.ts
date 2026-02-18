@@ -36,6 +36,13 @@ export function saveBriefing(briefing: StoredBriefing): void {
   );
 }
 
+/** Delete a briefing by ID */
+export function deleteBriefing(id: string): boolean {
+  const db = getDb();
+  const result = db.prepare('DELETE FROM briefings WHERE id = ?').run(id);
+  return result.changes > 0;
+}
+
 /** Get all briefings, most recent first */
 export function getAllBriefings(limit = 50): StoredBriefing[] {
   const db = getDb();
