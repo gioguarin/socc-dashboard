@@ -1,7 +1,7 @@
 /**
  * Rich briefing generator.
- * Builds a daily security briefing from current threat, news, and stock data
- * with optional weather. Output is formatted markdown for display in BriefingCard.
+ * Builds a daily security briefing from current threat, news, and stock data.
+ * Output is formatted markdown for display in BriefingCard.
  */
 
 import { readDataFile } from '../utils.js';
@@ -43,27 +43,6 @@ const COMPETITOR_LABELS: Record<string, string> = {
   zscaler: 'Zscaler', crowdstrike: 'CrowdStrike', paloalto: 'Palo Alto',
   fastly: 'Fastly', f5: 'F5',
 };
-
-/** Fetch weather from wttr.in with 5s timeout */
-async function fetchWeather(location: string): Promise<string> {
-  try {
-    const res = await fetch(
-      `https://wttr.in/${encodeURIComponent(location)}?format=j1`,
-      { signal: AbortSignal.timeout(5000) },
-    );
-    if (!res.ok) return `*Weather data unavailable (HTTP ${res.status})*`;
-    const data = await res.json();
-    const cur = data.current_condition?.[0];
-    if (!cur) return '*Weather data unavailable*';
-    const tempF = cur.temp_F;
-    const feelsF = cur.FeelsLikeF;
-    const condition = cur.weatherDesc?.[0]?.value ?? 'Unknown';
-    const humidity = cur.humidity;
-    return `Currently ${tempF}°F (feels like ${feelsF}°F), ${condition}. Humidity: ${humidity}%.`;
-  } catch {
-    return '*Weather data unavailable — check your phone.*';
-  }
-}
 
 /** Sort items by publishedAt descending */
 function byDateDesc<T extends { publishedAt: string }>(items: T[]): T[] {
@@ -210,17 +189,9 @@ export async function buildBriefing(): Promise<StoredBriefing> {
   const news = readDataFile<NewsItem[]>('news.json', []);
   const stocks = readDataFile<StockItem[]>('stocks.json', []);
 
-  const weatherLocation = process.env.SOCC_WEATHER_LOCATION ?? 'Greenacres+FL';
-
   // Build all sections
   const lines: string[] = [];
   lines.push(`## ☀️ SOCC Morning Briefing — ${dateStr}`);
-  lines.push('');
-
-  // Weather
-  const weather = await fetchWeather(weatherLocation);
-  lines.push(`### 🌤️ Weather — ${weatherLocation.replace(/\+/g, ' ')}`);
-  lines.push(weather);
   lines.push('');
 
   // News
