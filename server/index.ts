@@ -23,6 +23,9 @@ getDb();
 
 const app = express();
 
+// Trust reverse proxy (Caddy) so rate-limiter sees real client IPs
+app.set('trust proxy', 1);
+
 // CORS config
 const corsOptions = config.allowedOrigins.includes('*')
   ? {}
