@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   ResponsiveGridLayout,
   useContainerWidth,
@@ -85,18 +85,50 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Store original heights so we can restore them on expand
+  const originalHeights = useRef<Record<string, Record<string, number>>>({});
+
+  const COLLAPSED_HEIGHT = 1;
+
   const toggleCollapse = useCallback((panel: string) => {
     setCollapsedPanels((prev) => {
       const next = new Set(prev);
-      if (next.has(panel)) {
+      const isExpanding = next.has(panel);
+      if (isExpanding) {
         next.delete(panel);
       } else {
         next.add(panel);
       }
       setSavedCollapsed(Array.from(next));
+
+      // Update layout heights
+      setLayouts((prevLayouts) => {
+        const updated: ResponsiveLayouts = {};
+        for (const [bp, layout] of Object.entries(prevLayouts)) {
+          if (!layout) continue;
+          updated[bp] = layout.map((item: LayoutItem) => {
+            if (item.i !== panel) return item;
+            if (!isExpanding) {
+              // Collapsing: save original height, set to 1 row
+              if (!originalHeights.current[bp]) originalHeights.current[bp] = {};
+              originalHeights.current[bp][panel] = item.h;
+              return { ...item, h: COLLAPSED_HEIGHT, minH: COLLAPSED_HEIGHT };
+            } else {
+              // Expanding: restore original height
+              const savedH = originalHeights.current[bp]?.[panel] ?? item.h;
+              const defaultItem = DEFAULT_LAYOUTS[bp]?.find((d: LayoutItem) => d.i === panel);
+              const minH = defaultItem?.minH ?? 2;
+              return { ...item, h: savedH, minH };
+            }
+          });
+        }
+        setSavedLayouts(updated);
+        return updated;
+      });
+
       return next;
     });
-  }, [setSavedCollapsed]);
+  }, [setSavedCollapsed, setSavedLayouts]);
 
   // Filter layouts to only include visible panels
   const filteredLayouts = useMemo(() => {
