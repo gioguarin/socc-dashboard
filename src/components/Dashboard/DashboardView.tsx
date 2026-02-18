@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   ResponsiveGridLayout,
   useContainerWidth,
@@ -76,6 +76,14 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
   const [collapsedPanels, setCollapsedPanels] = useState<Set<string>>(new Set(savedCollapsed));
 
   const { containerRef, width } = useContainerWidth({ initialWidth: 1200 });
+
+  // Disable drag on mobile to prevent scroll hijacking
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const toggleCollapse = useCallback((panel: string) => {
     setCollapsedPanels((prev) => {
@@ -191,6 +199,8 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
         margin={[12, 12]}
         containerPadding={[4, 4]}
         onLayoutChange={handleLayoutChange}
+        dragConfig={{ enabled: !isMobile }}
+        resizeConfig={{ enabled: !isMobile }}
       >
         {panels.map((panel) => {
           const isCollapsed = collapsedPanels.has(panel);
