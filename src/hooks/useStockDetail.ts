@@ -23,7 +23,8 @@ export function useStockDetail(initialRange: StockRange = '1mo'): UseStockDetail
     setError(null);
 
     try {
-      const resp = await fetch('/api/stocks/batch', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const resp = await fetch(`${apiUrl}/api/stocks/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbols: SYMBOLS, range }),
