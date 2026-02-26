@@ -133,7 +133,8 @@ router.post('/enrich', async (req, res) => {
       return;
     }
 
-    if (article.tldr) {
+    // Return cached TL;DR unless it's the generic Google News boilerplate
+    if (article.tldr && !article.tldr.includes('aggregated from sources all over the world')) {
       sendSuccess(res, { id, tldr: article.tldr, cached: true });
       return;
     }
