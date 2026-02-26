@@ -26,8 +26,10 @@ fi
 
 CONTAINER="socc-dashboard"
 
-# Build JSON payload using node inside the Docker container
-payload=$(docker exec "$CONTAINER" node -e "
+PAYLOAD_FILE="/tmp/fermyon-sync-payload.json"
+
+# Build JSON payload using node inside the Docker container, write to file
+docker exec "$CONTAINER" node -e "
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
@@ -63,14 +65,14 @@ try {
 }
 
 console.log(JSON.stringify({ news, threats, stocks, briefings }));
-")
+" > "$PAYLOAD_FILE"
 
-# POST to Fermyon sync endpoint
+# POST to Fermyon sync endpoint (use @file to avoid arg length limits)
 HTTP_CODE=$(curl -s -o /tmp/fermyon-sync-response.json -w "%{http_code}" \
   -X POST "${FERMYON_URL}/api/sync" \
   -H "Authorization: Bearer ${SYNC_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "$payload")
+  -d @"$PAYLOAD_FILE")
 
 if [ "$HTTP_CODE" -eq 200 ]; then
   # Parse response counts with grep/sed (no node needed)
