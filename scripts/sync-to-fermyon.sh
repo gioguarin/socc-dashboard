@@ -24,17 +24,16 @@ if [ -z "${FERMYON_URL:-}" ] || [ -z "${SYNC_TOKEN:-}" ]; then
   exit 1
 fi
 
-DATA_DIR="$PROJECT_DIR/server/data"
-DB_PATH="$DATA_DIR/socc.db"
+CONTAINER="socc-dashboard"
 
-# Build JSON payload from data files + SQLite briefings
-payload=$(node -e "
+# Build JSON payload using node inside the Docker container
+payload=$(docker exec "$CONTAINER" node -e "
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const dataDir = process.argv[1];
-const dbPath = process.argv[2];
+const dataDir = '/app/server/data';
+const dbPath = path.join(dataDir, 'socc.db');
 
 function readJson(file) {
   try {
@@ -64,7 +63,7 @@ try {
 }
 
 console.log(JSON.stringify({ news, threats, stocks, briefings }));
-" "$DATA_DIR" "$DB_PATH")
+")
 
 # POST to Fermyon sync endpoint
 HTTP_CODE=$(curl -s -o /tmp/fermyon-sync-response.json -w "%{http_code}" \
@@ -74,12 +73,9 @@ HTTP_CODE=$(curl -s -o /tmp/fermyon-sync-response.json -w "%{http_code}" \
   -d "$payload")
 
 if [ "$HTTP_CODE" -eq 200 ]; then
-  COUNTS=$(cat /tmp/fermyon-sync-response.json | node -e "
-    const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
-    const c = d.data?.counts || {};
-    console.log('news=' + (c.news||0) + ' threats=' + (c.threats||0) + ' stocks=' + (c.stocks||0) + ' briefings=' + (c.briefings||0));
-  ")
-  echo "$(date -Iseconds) Synced to Fermyon: $COUNTS"
+  # Parse response counts with grep/sed (no node needed)
+  RESPONSE=$(cat /tmp/fermyon-sync-response.json)
+  echo "$(date -Iseconds) Synced to Fermyon (HTTP 200): $RESPONSE"
 else
   echo "$(date -Iseconds) Sync failed (HTTP $HTTP_CODE):" >&2
   cat /tmp/fermyon-sync-response.json >&2
