@@ -41,6 +41,10 @@ export function useApiWithAnomaly<T>(url: string, refreshInterval?: number): Use
     try {
       const response = await fetch(`${API_BASE}${url}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Non-JSON response');
+      }
       const json = await response.json();
 
       // Handle wrapped response { data, anomaly } or plain array

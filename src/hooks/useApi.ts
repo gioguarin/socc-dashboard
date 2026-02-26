@@ -21,6 +21,10 @@ export function useApi<T>(url: string, refreshInterval?: number): UseApiResult<T
     try {
       const response = await fetch(`${API_BASE}${url}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Non-JSON response');
+      }
       const json = await response.json();
       /* Unwrap API responses that wrap the payload in a `data` key (e.g. { data, anomaly } or { success, data }) */
       const payload = json != null && typeof json === 'object' && !Array.isArray(json) && 'data' in json
