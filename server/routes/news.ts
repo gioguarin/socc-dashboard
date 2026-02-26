@@ -35,7 +35,16 @@ const router = Router();
  */
 router.get('/', (_req, res) => {
   try {
-    const data = readDataFile('news.json', []);
+    const raw = readDataFile('news.json', []);
+
+    // Deduplicate by title (keep first = most recent)
+    const seenTitles = new Set<string>();
+    const data = raw.filter((item: { title?: string }) => {
+      const key = (item.title ?? '').trim().toLowerCase();
+      if (!key || seenTitles.has(key)) return false;
+      seenTitles.add(key);
+      return true;
+    });
 
     // Ingest into SQLite for historical tracking
     try {

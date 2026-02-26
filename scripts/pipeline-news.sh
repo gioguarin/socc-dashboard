@@ -61,7 +61,9 @@ except:
     seen_ids = set()
 
 existing_ids = {item["id"] for item in existing}
+existing_titles = {item.get("title", "").strip().lower() for item in existing}
 new_items = []
+new_titles = set()
 
 with open(tmpfile) as f:
     raw = f.read()
@@ -132,6 +134,10 @@ while i < len(sections):
         item_id = hashlib.md5(link.encode()).hexdigest()[:12]
         if item_id in existing_ids or item_id in seen_ids:
             continue
+        title_key = title.strip().lower()
+        if title_key in existing_titles or title_key in new_titles:
+            seen_ids.add(item_id)
+            continue
 
         try:
             from email.utils import parsedate_to_datetime
@@ -153,8 +159,19 @@ while i < len(sections):
             "status": "new"
         })
         seen_ids.add(item_id)
+        new_titles.add(title_key)
 
 combined = new_items + existing
+# Deduplicate by title (keep first occurrence = newest since new_items are prepended)
+seen_titles = set()
+deduped = []
+for item in combined:
+    tk = item.get("title", "").strip().lower()
+    if tk and tk in seen_titles:
+        continue
+    seen_titles.add(tk)
+    deduped.append(item)
+combined = deduped
 combined.sort(key=lambda x: x.get("publishedAt", ""), reverse=True)
 combined = combined[:200]
 
