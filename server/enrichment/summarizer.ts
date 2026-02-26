@@ -1,8 +1,10 @@
 /**
- * Article enrichment — fetches a web page and extracts a TL;DR summary.
- * Uses meta tags, Open Graph, and first paragraph text extraction.
- * No LLM required — purely extraction-based.
+ * Article enrichment — uses Claude Haiku to generate TL;DR summaries.
+ * Fetches article HTML for context, sends to Claude for summarization.
+ * Falls back to extraction-based summary if no API key or on error.
  */
+
+import Anthropic from '@anthropic-ai/sdk';
 
 interface EnrichResult {
   tldr: string;
@@ -11,64 +13,61 @@ interface EnrichResult {
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+let anthropic: Anthropic | null = null;
+
+function getClient(): Anthropic | null {
+  if (anthropic) return anthropic;
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  anthropic = new Anthropic({ apiKey: key });
+  return anthropic;
+}
+
+// ─── URL Resolution ─────────────────────────────────────────────
+
 /** Resolve Google News redirect URLs to the actual article URL */
 async function resolveUrl(url: string): Promise<string> {
-  // Google News RSS URLs use redirects — follow them to get the real URL
   if (!url.includes('news.google.com') && !url.includes('google.com/rss')) {
     return url;
   }
 
   try {
-    // Google News sometimes uses HTTP redirects
     const res = await fetch(url, {
       headers: { 'User-Agent': UA },
       redirect: 'manual',
       signal: AbortSignal.timeout(5000),
     });
 
-    // Check for HTTP redirect
     const location = res.headers.get('location');
     if (location && !location.includes('google.com')) {
       return location;
     }
 
-    // Some Google News URLs embed the real URL in the page HTML
     if (res.ok || res.status === 200) {
       const html = await res.text();
 
-      // Look for data-redirect or article URL patterns
       const jsRedirect = html.match(/window\.location\.replace\(["']([^"']+)["']\)/);
-      if (jsRedirect?.[1] && !jsRedirect[1].includes('google.com')) {
-        return jsRedirect[1];
-      }
+      if (jsRedirect?.[1] && !jsRedirect[1].includes('google.com')) return jsRedirect[1];
 
-      // Look for the canonical/article link in the page
       const canonical = html.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i);
-      if (canonical?.[1] && !canonical[1].includes('google.com')) {
-        return canonical[1];
-      }
+      if (canonical?.[1] && !canonical[1].includes('google.com')) return canonical[1];
 
-      // Look for og:url which often has the real article URL
       const ogUrl = html.match(/<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']+)["']/i)
         || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:url["']/i);
-      if (ogUrl?.[1] && !ogUrl[1].includes('google.com')) {
-        return ogUrl[1];
-      }
+      if (ogUrl?.[1] && !ogUrl[1].includes('google.com')) return ogUrl[1];
 
-      // Look for article links in the body
       const articleLink = html.match(/<a[^>]*href=["'](https?:\/\/(?!(?:www\.)?google\.com)[^"']+)["'][^>]*data-n-au/i);
-      if (articleLink?.[1]) {
-        return articleLink[1];
-      }
+      if (articleLink?.[1]) return articleLink[1];
     }
   } catch {
-    // Fall through to original URL
+    // Fall through
   }
 
   return url;
 }
 
-/** Extract text content between HTML tags, stripping nested tags */
+// ─── HTML Extraction ────────────────────────────────────────────
+
 function stripHtml(html: string): string {
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -84,9 +83,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-/** Extract meta content by name or property */
 function extractMeta(html: string, attr: string): string | null {
-  // Match both name="..." and property="..."
   const patterns = [
     new RegExp(`<meta[^>]*(?:name|property)=["']${attr}["'][^>]*content=["']([^"']+)["']`, 'i'),
     new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["']${attr}["']`, 'i'),
@@ -98,47 +95,27 @@ function extractMeta(html: string, attr: string): string | null {
   return null;
 }
 
-/** Extract first meaningful paragraphs from HTML */
-function extractParagraphs(html: string, maxChars = 500): string {
-  const paragraphs = html.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) || [];
+function extractArticleText(html: string, maxChars = 2000): string {
+  // Try <article> tag first
+  const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+  const scope = articleMatch?.[1] || html;
+
+  const paragraphs = scope.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) || [];
   const texts: string[] = [];
   let total = 0;
 
   for (const p of paragraphs) {
     const text = stripHtml(p).trim();
-    // Skip short/boilerplate paragraphs
-    if (text.length < 40) continue;
-    if (/cookie|subscribe|sign up|newsletter|advertisement/i.test(text)) continue;
+    if (text.length < 30) continue;
+    if (/cookie|subscribe|sign up|newsletter|advertisement|privacy policy/i.test(text)) continue;
     texts.push(text);
     total += text.length;
     if (total >= maxChars) break;
   }
 
-  return texts.join(' ');
+  return texts.join('\n\n');
 }
 
-/** Simple keyword-based sentiment from article text */
-function detectSentiment(text: string): 'positive' | 'negative' | 'neutral' {
-  const lower = text.toLowerCase();
-  const negWords = /breach|attack|exploit|vulnerability|ransomware|outage|incident|critical|threat|malware|compromise|leak|failure|disruption|downtime/g;
-  const posWords = /launch|improve|partner|growth|success|award|innovation|upgrade|enhance|secure|protect|milestone|revenue growth/g;
-  const negCount = (lower.match(negWords) || []).length;
-  const posCount = (lower.match(posWords) || []).length;
-  if (negCount > posCount + 1) return 'negative';
-  if (posCount > negCount + 1) return 'positive';
-  return 'neutral';
-}
-
-/** Truncate to a clean sentence boundary */
-function truncateToSentence(text: string, maxLen = 280): string {
-  if (text.length <= maxLen) return text;
-  const cut = text.slice(0, maxLen);
-  const lastPeriod = cut.lastIndexOf('. ');
-  if (lastPeriod > maxLen * 0.4) return cut.slice(0, lastPeriod + 1);
-  return cut.trim() + '...';
-}
-
-/** Check if a description is generic/useless boilerplate */
 function isGenericDescription(text: string): boolean {
   const lower = text.toLowerCase();
   return (
@@ -148,15 +125,69 @@ function isGenericDescription(text: string): boolean {
     lower.includes('sign in to your account') ||
     lower.includes('access denied') ||
     lower.includes('please enable javascript') ||
-    lower.includes('you need to enable javascript') ||
     text.length < 30
   );
 }
 
+// ─── Claude AI Summarization ────────────────────────────────────
+
+async function summarizeWithClaude(
+  title: string,
+  articleText: string,
+  source: string,
+): Promise<EnrichResult | null> {
+  const client = getClient();
+  if (!client) return null;
+
+  // Trim article text to stay within reasonable token limits
+  const trimmedText = articleText.slice(0, 3000);
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Summarize this news article in 1-2 concise sentences (max 250 chars). Also classify sentiment as positive, negative, or neutral.
+
+Title: ${title}
+Source: ${source}
+Article text:
+${trimmedText}
+
+Respond in this exact JSON format only, no other text:
+{"tldr": "your summary here", "sentiment": "positive|negative|neutral"}`,
+      }],
+    });
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    // Extract JSON from response (handle markdown code blocks)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.tldr && typeof parsed.tldr === 'string') {
+        return {
+          tldr: parsed.tldr.slice(0, 300),
+          sentiment: ['positive', 'negative', 'neutral'].includes(parsed.sentiment)
+            ? parsed.sentiment
+            : 'neutral',
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Claude enrichment error:', err instanceof Error ? err.message : err);
+  }
+
+  return null;
+}
+
+// ─── Main Entry Point ───────────────────────────────────────────
+
 export async function enrichArticle(url: string, title: string, source: string): Promise<EnrichResult> {
-  // Resolve Google News redirects to actual article URL
+  // Resolve Google News redirects
   const resolvedUrl = await resolveUrl(url);
   let html = '';
+  let articleText = '';
 
   try {
     const res = await fetch(resolvedUrl, {
@@ -168,42 +199,51 @@ export async function enrichArticle(url: string, title: string, source: string):
       html = await res.text();
     }
   } catch {
-    // Fetch failed — fall back to title-based summary
+    // Fetch failed
   }
 
   if (html) {
-    // Try structured meta first (most reliable)
+    articleText = extractArticleText(html);
+
+    // Also grab meta descriptions as additional context
+    const ogDesc = extractMeta(html, 'og:description') || '';
+    const metaDesc = extractMeta(html, 'description') || '';
+    if (ogDesc && !isGenericDescription(ogDesc)) {
+      articleText = ogDesc + '\n\n' + articleText;
+    } else if (metaDesc && !isGenericDescription(metaDesc)) {
+      articleText = metaDesc + '\n\n' + articleText;
+    }
+  }
+
+  // Try Claude AI first (if API key is configured)
+  if (articleText.length > 50) {
+    const aiResult = await summarizeWithClaude(title, articleText, source);
+    if (aiResult) return aiResult;
+  }
+
+  // Also try Claude with just the title if we couldn't fetch the article
+  if (articleText.length <= 50) {
+    const aiResult = await summarizeWithClaude(title, `No article text available. Summarize based on the title.`, source);
+    if (aiResult) return aiResult;
+  }
+
+  // Fallback: use meta description if available
+  if (html) {
     const ogDesc = extractMeta(html, 'og:description');
     const metaDesc = extractMeta(html, 'description');
-    const twitterDesc = extractMeta(html, 'twitter:description');
-
-    // Filter out generic Google News descriptions
-    const candidates = [ogDesc, metaDesc, twitterDesc].filter(
-      (d): d is string => !!d && !isGenericDescription(d)
-    );
-    const bestMeta = candidates.find(d => d.length > 60) || candidates[0];
-
-    if (bestMeta && bestMeta.length > 30) {
+    const bestMeta = [ogDesc, metaDesc].find(d => d && !isGenericDescription(d) && d.length > 30);
+    if (bestMeta) {
       return {
-        tldr: truncateToSentence(bestMeta),
-        sentiment: detectSentiment(bestMeta + ' ' + title),
-      };
-    }
-
-    // Fall back to paragraph extraction
-    const bodyText = extractParagraphs(html);
-    if (bodyText.length > 60 && !isGenericDescription(bodyText)) {
-      return {
-        tldr: truncateToSentence(bodyText),
-        sentiment: detectSentiment(bodyText),
+        tldr: bestMeta.length > 280 ? bestMeta.slice(0, 277) + '...' : bestMeta,
+        sentiment: 'neutral',
       };
     }
   }
 
-  // Last resort: derive from title
+  // Last resort
   const sourceLabel = source.charAt(0).toUpperCase() + source.slice(1);
   return {
     tldr: `${sourceLabel} news: ${title}`,
-    sentiment: detectSentiment(title),
+    sentiment: 'neutral',
   };
 }
