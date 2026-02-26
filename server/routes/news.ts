@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { readDataFile, writeDataFile } from '../utils.js';
+import { readDataFile } from '../utils.js';
 import { ingestNews } from '../db/ingest.js';
 import { detectAnomaly } from '../anomaly.js';
 import { getDb } from '../db/index.js';
 import { sendSuccess, sendBadRequest, sendServerError } from '../utils/response.js';
-import { enrichArticle } from '../enrichment/summarizer.js';
 
 const router = Router();
 
@@ -117,8 +116,8 @@ router.get('/history', (req, res) => {
   }
 });
 
-/** POST /api/news/enrich — Fetch and summarize an article */
-router.post('/enrich', async (req, res) => {
+/** POST /api/news/enrich — Return cached TL;DR (read-only, no API calls) */
+router.post('/enrich', (req, res) => {
   try {
     const { id } = req.body;
     if (!id) {
@@ -133,22 +132,14 @@ router.post('/enrich', async (req, res) => {
       return;
     }
 
-    // Return cached TL;DR unless it's the generic Google News boilerplate
-    if (article.tldr && !article.tldr.includes('aggregated from sources all over the world')) {
-      sendSuccess(res, { id, tldr: article.tldr, cached: true });
-      return;
+    if (article.tldr) {
+      sendSuccess(res, { id, tldr: article.tldr, sentiment: article.sentiment, cached: true });
+    } else {
+      // Not yet enriched — background job will handle it
+      sendSuccess(res, { id, tldr: null, pending: true });
     }
-
-    const result = await enrichArticle(article.url, article.title, article.source);
-
-    // Write back to news.json
-    article.tldr = result.tldr;
-    if (result.sentiment) article.sentiment = result.sentiment;
-    writeDataFile('news.json', news);
-
-    sendSuccess(res, { id, tldr: result.tldr, sentiment: result.sentiment });
   } catch {
-    sendServerError(res, 'Failed to enrich article');
+    sendServerError(res, 'Failed to read article');
   }
 });
 

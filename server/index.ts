@@ -14,6 +14,7 @@ import stocksRouter from './routes/stocks.js';
 import briefingsRouter from './routes/briefings.js';
 import sourcesRouter from './routes/sources.js';
 import { sendSuccess } from './utils/response.js';
+import { startBackgroundEnrichment, stopBackgroundEnrichment } from './enrichment/background.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,14 +93,19 @@ if (config.nodeEnv === 'production') {
 
 app.listen(config.port, () => {
   console.log(`🛡️  SOCC Dashboard server running on http://localhost:${config.port}`);
+
+  // Start background AI enrichment (every 60s, 5 articles per batch)
+  startBackgroundEnrichment(60_000);
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
+  stopBackgroundEnrichment();
   closeDb();
   process.exit(0);
 });
 process.on('SIGTERM', () => {
+  stopBackgroundEnrichment();
   closeDb();
   process.exit(0);
 });
