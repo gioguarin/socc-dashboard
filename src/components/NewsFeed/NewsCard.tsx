@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Flag, Eye, EyeOff, ChevronDown, Sparkles } from 'lucide-react';
+import { ExternalLink, Flag, Eye, EyeOff, ChevronDown, Sparkles, Loader2 } from 'lucide-react';
 import { NewsItem } from '../../types';
 import { SOURCE_COLORS, SOURCE_LABELS, CATEGORY_LABELS } from '../../utils/constants';
 import { timeAgo } from '../../utils/formatters';
 import { analyzeSentiment, SENTIMENT_CONFIG } from '../../utils/sentiment';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -12,6 +14,8 @@ interface NewsCardProps {
 
 export default function NewsCard({ item }: NewsCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [tldr, setTldr] = useState(item.tldr || '');
+  const [enriching, setEnriching] = useState(false);
   const sourceColor = SOURCE_COLORS[item.source] || SOURCE_COLORS.general;
   const isDimmed = item.status === 'reviewed' || item.status === 'dismissed';
   const isFlagged = item.status === 'flagged';
@@ -19,8 +23,29 @@ export default function NewsCard({ item }: NewsCardProps) {
   const sentiment = item.sentiment || analyzeSentiment(item.title, item.summary);
   const sentimentCfg = SENTIMENT_CONFIG[sentiment];
 
-  const hasTldr = Boolean(item.tldr);
-  const hasDetails = hasTldr || item.summary;
+  const hasTldr = Boolean(tldr);
+  const hasDetails = true; // Always expandable
+
+  const fetchTldr = useCallback(async () => {
+    if (tldr || enriching) return;
+    setEnriching(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/news/enrich`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data = json?.data ?? json;
+        if (data.tldr) setTldr(data.tldr);
+      }
+    } catch {
+      // Silently fail — article still shows without TL;DR
+    } finally {
+      setEnriching(false);
+    }
+  }, [item.id, tldr, enriching]);
 
   return (
     <motion.div
@@ -37,8 +62,12 @@ export default function NewsCard({ item }: NewsCardProps) {
       }`}
     >
       <div
-        className={hasDetails ? 'cursor-pointer' : ''}
-        onClick={() => hasDetails && setExpanded(!expanded)}
+        className="cursor-pointer"
+        onClick={() => {
+          const willExpand = !expanded;
+          setExpanded(willExpand);
+          if (willExpand && !tldr) fetchTldr();
+        }}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -107,7 +136,17 @@ export default function NewsCard({ item }: NewsCardProps) {
           >
             <div className="mt-2 pt-2 border-t border-socc-border/20">
               {/* AI-generated TL;DR */}
-              {hasTldr && (
+              {enriching && (
+                <div className="mb-2.5 px-3 py-2 rounded-md bg-purple-500/5 border border-purple-500/15">
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 text-purple-400 animate-spin" />
+                    <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">
+                      Fetching summary...
+                    </span>
+                  </div>
+                </div>
+              )}
+              {hasTldr && !enriching && (
                 <div className="mb-2.5 px-3 py-2 rounded-md bg-purple-500/5 border border-purple-500/15">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles className="w-3 h-3 text-purple-400" />
@@ -115,7 +154,7 @@ export default function NewsCard({ item }: NewsCardProps) {
                       TL;DR
                     </span>
                   </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">{item.tldr}</p>
+                  <p className="text-xs text-gray-300 leading-relaxed">{tldr}</p>
                 </div>
               )}
 

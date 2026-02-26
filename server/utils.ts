@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,4 +24,10 @@ export function readDataFile<T>(filename: string, fallback: T): T {
   }
 
   return fallback;
+}
+
+/** Write a JSON data file */
+export function writeDataFile(filename: string, data: unknown): void {
+  const filepath = path.resolve(__dirname, 'data', filename);
+  writeFileSync(filepath, JSON.stringify(data, null, 2));
 }

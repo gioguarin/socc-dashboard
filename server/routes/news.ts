@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { readDataFile } from '../utils.js';
+import { readDataFile, writeDataFile } from '../utils.js';
 import { ingestNews } from '../db/ingest.js';
 import { detectAnomaly } from '../anomaly.js';
 import { getDb } from '../db/index.js';
-import { sendSuccess, sendServerError } from '../utils/response.js';
+import { sendSuccess, sendBadRequest, sendServerError } from '../utils/response.js';
+import { enrichArticle } from '../enrichment/summarizer.js';
 
 const router = Router();
 
@@ -113,6 +114,40 @@ router.get('/history', (req, res) => {
     sendSuccess(res, rows, { meta: { count: rows.length, days } });
   } catch {
     sendServerError(res, 'Failed to query news history');
+  }
+});
+
+/** POST /api/news/enrich — Fetch and summarize an article */
+router.post('/enrich', async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) {
+      sendBadRequest(res, 'Missing article id');
+      return;
+    }
+
+    const news = readDataFile('news.json', []);
+    const article = news.find((item: { id: string }) => item.id === id);
+    if (!article) {
+      sendBadRequest(res, 'Article not found');
+      return;
+    }
+
+    if (article.tldr) {
+      sendSuccess(res, { id, tldr: article.tldr, cached: true });
+      return;
+    }
+
+    const result = await enrichArticle(article.url, article.title, article.source);
+
+    // Write back to news.json
+    article.tldr = result.tldr;
+    if (result.sentiment) article.sentiment = result.sentiment;
+    writeDataFile('news.json', news);
+
+    sendSuccess(res, { id, tldr: result.tldr, sentiment: result.sentiment });
+  } catch {
+    sendServerError(res, 'Failed to enrich article');
   }
 });
 
