@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { View } from '../../types';
 import { ThemeSelector } from '../Settings/ThemeSelector';
+import AnalogClock from './AnalogClock';
 
 interface SidebarProps {
   activeView: View;
@@ -117,6 +118,11 @@ export default function Sidebar({
           );
         })}
       </nav>
+
+      {/* Analog clock */}
+      <div className="border-t border-socc-border/20">
+        <AnalogClock collapsed={collapsed} />
+      </div>
 
       {/* Settings section */}
       <div className="border-t border-socc-border/20">
