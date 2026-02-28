@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// Module-level cache survives component unmount/remount
+const cache = new Map<string, { data: unknown; fetchedAt: number }>();
+
 interface UseApiResult<T> {
   data: T | null;
   loading: boolean;
@@ -11,10 +14,11 @@ interface UseApiResult<T> {
 }
 
 export function useApi<T>(url: string, refreshInterval?: number): UseApiResult<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = cache.get(url);
+  const [data, setData] = useState<T | null>(cached ? (cached.data as T) : null);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [lastFetched, setLastFetched] = useState<Date | null>(cached ? new Date(cached.fetchedAt) : null);
   const intervalRef = useRef<number | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -32,7 +36,9 @@ export function useApi<T>(url: string, refreshInterval?: number): UseApiResult<T
         : json;
       setData(payload);
       setError(null);
-      setLastFetched(new Date());
+      const now = new Date();
+      setLastFetched(now);
+      cache.set(url, { data: payload, fetchedAt: now.getTime() });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

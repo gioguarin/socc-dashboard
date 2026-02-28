@@ -12,6 +12,9 @@ interface UseStockDetailResult {
 
 const SYMBOLS = ['AKAM', 'NET', 'FSLY', 'ZS', 'CRWD', 'PANW', 'FFIV'];
 
+// Module-level cache survives component unmount/remount
+let cachedStocks: StockDetailData[] | null = null;
+
 /** Convert basic StockData to StockDetailData with null detail fields */
 function toDetailData(s: StockData): StockDetailData {
   return {
@@ -39,13 +42,13 @@ function toDetailData(s: StockData): StockDetailData {
 }
 
 export function useStockDetail(initialRange: StockRange = '1mo'): UseStockDetailResult {
-  const [stocks, setStocks] = useState<StockDetailData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stocks, setStocks] = useState<StockDetailData[]>(cachedStocks || []);
+  const [loading, setLoading] = useState(!cachedStocks);
   const [error, setError] = useState<string | null>(null);
   const [range, setRange] = useState<StockRange>(initialRange);
 
   const fetchStocks = useCallback(async () => {
-    setLoading(true);
+    if (!cachedStocks) setLoading(true);
     setError(null);
 
     const apiUrl = import.meta.env.VITE_API_URL || '';
@@ -63,6 +66,7 @@ export function useStockDetail(initialRange: StockRange = '1mo'): UseStockDetail
       const json = await resp.json();
       if (json.success && Array.isArray(json.data)) {
         setStocks(json.data);
+        cachedStocks = json.data;
         return;
       }
       throw new Error('Invalid response');
@@ -76,7 +80,9 @@ export function useStockDetail(initialRange: StockRange = '1mo'): UseStockDetail
         const data: StockData[] = json.success && Array.isArray(json.data) ? json.data : json;
 
         if (Array.isArray(data) && data.length > 0) {
-          setStocks(data.map(toDetailData));
+          const detailed = data.map(toDetailData);
+          setStocks(detailed);
+          cachedStocks = detailed;
           return;
         }
         throw new Error('No stock data');

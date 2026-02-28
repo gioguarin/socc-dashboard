@@ -7,6 +7,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// Module-level cache survives component unmount/remount
+const cache = new Map<string, { data: unknown; anomaly: AnomalyInfo | null; fetchedAt: number }>();
+
 export interface AnomalyInfo {
   detected: boolean;
   type: string;
@@ -30,11 +33,12 @@ interface UseApiWithAnomalyResult<T> {
  * Falls back to treating the whole response as data if no wrapper detected.
  */
 export function useApiWithAnomaly<T>(url: string, refreshInterval?: number): UseApiWithAnomalyResult<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = cache.get(url);
+  const [data, setData] = useState<T | null>(cached ? (cached.data as T) : null);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
-  const [anomaly, setAnomaly] = useState<AnomalyInfo | null>(null);
-  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [anomaly, setAnomaly] = useState<AnomalyInfo | null>(cached ? cached.anomaly : null);
+  const [lastFetched, setLastFetched] = useState<Date | null>(cached ? new Date(cached.fetchedAt) : null);
   const intervalRef = useRef<number | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -51,9 +55,11 @@ export function useApiWithAnomaly<T>(url: string, refreshInterval?: number): Use
       if (json && typeof json === 'object' && 'data' in json && Array.isArray(json.data)) {
         setData(json.data as T);
         setAnomaly(json.anomaly ?? null);
+        cache.set(url, { data: json.data, anomaly: json.anomaly ?? null, fetchedAt: Date.now() });
       } else {
         setData(json as T);
         setAnomaly(null);
+        cache.set(url, { data: json, anomaly: null, fetchedAt: Date.now() });
       }
 
       setError(null);
