@@ -28,7 +28,7 @@ export default function BriefingCard({ briefing, defaultExpanded = false }: Brie
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       className="border border-socc-border/30 rounded-xl overflow-hidden bg-socc-card/50 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300"
     >

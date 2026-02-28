@@ -30,7 +30,7 @@ const DEFAULT_CONFIG: DigestConfig = {
     { id: 'news', label: 'Industry News', description: 'Vendor news and security updates', enabled: true },
     { id: 'stocks', label: 'Stock Summary', description: 'Tracked vendor stock movements', enabled: true },
     { id: 'calendar', label: 'Calendar', description: 'Today\'s events and deadlines', enabled: true },
-    { id: 'projects', label: 'Project Updates', description: 'Active project status', enabled: false },
+    { id: 'projects', label: 'Todo Updates', description: 'Active todo status', enabled: false },
   ],
   prioritySources: [],
   deliveryTime: '06:30',

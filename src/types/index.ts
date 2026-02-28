@@ -131,14 +131,13 @@ export interface ShiftNote {
   updatedAt: string;
 }
 
-export type ProjectStatus = 'active' | 'paused' | 'completed';
+export type TodoStatus = 'todo' | 'in_progress' | 'done';
 
-export interface Project {
+export interface TodoItem {
   id: string;
-  name: string;
-  status: ProjectStatus;
+  title: string;
   description: string;
-  deadline: string | null;
+  status: TodoStatus;
   createdAt: string;
   updatedAt: string;
 }

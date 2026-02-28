@@ -30,7 +30,7 @@ export default function NewsCard({ item }: NewsCardProps) {
     <motion.div
       layout
       data-item
-      initial={{ opacity: 0, y: 6 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       className={`group relative pl-4 py-3 pr-3 border-l-[3px] transition-all duration-300 hover:bg-socc-hover/30 rounded-r-lg ${
         isFlagged

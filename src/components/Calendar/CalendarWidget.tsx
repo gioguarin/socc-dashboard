@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Plus, X, Clock, FolderKanban } from 'lucide-react';
-import type { Project, CalendarEvent } from '../../types';
+import type { CalendarEvent } from '../../types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 /** Compact calendar/deadlines widget for the dashboard. */
 export function CalendarWidget() {
-  const [projects] = useLocalStorage<Project[]>('socc-projects', []);
   const [events, setEvents] = useLocalStorage<CalendarEvent[]>('socc-calendar-events', []);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -15,25 +14,17 @@ export function CalendarWidget() {
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
 
-  /* Merge project deadlines + manual events into unified timeline */
+  /* Manual events as unified timeline */
   const allEvents = useMemo(() => {
-    const items: Array<{ id: string; title: string; date: string; type: 'deadline' | 'event'; projectName?: string }> = [];
+    const items: Array<{ id: string; title: string; date: string; type: 'deadline' | 'event' }> = [];
 
-    /* Project deadlines */
-    for (const p of projects) {
-      if (p.deadline && p.status !== 'completed') {
-        items.push({ id: p.id, title: p.name, date: p.deadline, type: 'deadline', projectName: p.name });
-      }
-    }
-
-    /* Manual events */
     for (const e of events) {
       items.push({ id: e.id, title: e.title, date: e.date, type: e.type });
     }
 
     items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return items;
-  }, [projects, events]);
+  }, [events]);
 
   /* Upcoming items (next 30 days) */
   const upcoming = useMemo(() => {

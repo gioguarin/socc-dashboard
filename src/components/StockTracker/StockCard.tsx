@@ -14,7 +14,7 @@ export default function StockCard({ stock }: StockCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
+      initial={false}
       animate={{ opacity: 1, scale: 1 }}
       className={`
         relative overflow-hidden rounded-xl border transition-all duration-300 card-hover-gradient

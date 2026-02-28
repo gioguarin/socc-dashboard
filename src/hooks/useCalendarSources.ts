@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { parseIcs } from '../utils/icsParser';
-import type { CalendarSource, ParsedCalendarEvent, CalendarEvent, Project } from '../types';
+import type { CalendarSource, ParsedCalendarEvent, CalendarEvent } from '../types';
 
 const SOURCES_KEY = 'socc-calendar-sources';
 const ICS_CACHE_KEY = 'socc-calendar-ics-cache';
@@ -34,9 +34,8 @@ export function useCalendarSources() {
   const [icsCache, setIcsCache] = useLocalStorage<IcsCache>(ICS_CACHE_KEY, {});
   const [loading, setLoading] = useState(false);
 
-  // Manual events and project deadlines from localStorage
+  // Manual events from localStorage
   const [manualEvents] = useLocalStorage<CalendarEvent[]>('socc-calendar-events', []);
-  const [projects] = useLocalStorage<Project[]>('socc-projects', []);
 
   const nextColor = useCallback(() => {
     return SOURCE_COLORS[sources.length % SOURCE_COLORS.length];
@@ -187,27 +186,9 @@ export function useCalendarSources() {
       });
     }
 
-    // Project deadlines
-    for (const p of projects) {
-      if (p.deadline && p.status !== 'completed') {
-        events.push({
-          id: `project-${p.id}`,
-          uid: p.id,
-          title: p.name,
-          description: `Project deadline`,
-          location: '',
-          start: p.deadline,
-          end: p.deadline,
-          allDay: true,
-          sourceId: 'projects',
-          color: '#f59e0b',
-        });
-      }
-    }
-
     events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
     return events;
-  }, [sources, icsCache, manualEvents, projects]);
+  }, [sources, icsCache, manualEvents]);
 
   return {
     sources,

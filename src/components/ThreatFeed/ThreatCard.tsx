@@ -28,7 +28,7 @@ export default function ThreatCard({ threat }: ThreatCardProps) {
     <motion.div
       layout
       data-item
-      initial={{ opacity: 0, x: -10 }}
+      initial={false}
       animate={{ opacity: 1, x: 0 }}
       className={`relative group border border-socc-border/30 rounded-xl overflow-hidden bg-socc-card/50 hover:bg-socc-hover/50 hover:border-socc-border/50 hover:shadow-[var(--socc-card-shadow-hover)] transition-all duration-300`}
     >

@@ -1,4 +1,4 @@
-import { useState, useCallback, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { View } from './types';
 import { useAuth } from './auth/AuthContext';
@@ -12,7 +12,7 @@ import NewsFeed from './components/NewsFeed/NewsFeed';
 import StockTracker from './components/StockTracker/StockTracker';
 import BriefingPanel from './components/Briefing/BriefingPanel';
 import { ShiftNotes } from './components/Notes/ShiftNotes';
-import { ProjectTracker } from './components/Projects/ProjectTracker';
+import { TodoBoard } from './components/Projects/ProjectTracker';
 import { CalendarView } from './components/Calendar/CalendarView';
 import RssSourceManager from './components/Settings/RssSourceManager';
 import { PreferencesModal } from './components/Settings/PreferencesModal';
@@ -30,12 +30,15 @@ export default function App() {
     return validViews.includes(pref as View) ? (pref as View) : 'dashboard';
   });
 
-  const [lastRefresh] = useState<Date | null>(new Date());
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [showDigest, setShowDigest] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Update last-refresh timestamp when view changes (each view triggers data fetches)
+  useEffect(() => { setLastRefresh(new Date()); }, [activeView]);
 
   const toggleSettings = useCallback(() => setShowSettings((v) => !v), []);
   const toggleShortcuts = useCallback(() => setShowShortcuts((v) => !v), []);
@@ -84,7 +87,7 @@ export default function App() {
       case 'notes':
         return <ViewPanel panelName="Shift Notes"><ShiftNotes /></ViewPanel>;
       case 'projects':
-        return <ViewPanel panelName="Projects"><ProjectTracker /></ViewPanel>;
+        return <ViewPanel panelName="Todo"><TodoBoard /></ViewPanel>;
       case 'calendar':
         return <ViewPanel panelName="Calendar"><CalendarView /></ViewPanel>;
     }
@@ -110,13 +113,13 @@ export default function App() {
           />
         }
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={activeView}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="h-full"
           >
             {renderView()}
