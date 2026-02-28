@@ -6,10 +6,12 @@
 # All data is real, sourced, and linked. No fabricated content.
 
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-DATA_DIR="$HOME/.openclaw/workspace/socc-dashboard/server/data"
-SEEN_FILE="$HOME/.openclaw/workspace/memory/threat-seen.txt"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+DATA_DIR="$PROJECT_DIR/server/data"
+SEEN_FILE="$DATA_DIR/.memory/threat-seen.txt"
+mkdir -p "$DATA_DIR/.memory"
 touch "$SEEN_FILE"
-mkdir -p "$DATA_DIR"
 
 EXISTING="$DATA_DIR/threats.json"
 if [ ! -f "$EXISTING" ] || [ ! -s "$EXISTING" ]; then

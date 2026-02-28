@@ -5,10 +5,12 @@
 # Compatible with macOS bash 3.2 (no associative arrays).
 
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-DATA_DIR="$HOME/.openclaw/workspace/socc-dashboard/server/data"
-SEEN_FILE="$HOME/.openclaw/workspace/memory/news-seen.txt"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+DATA_DIR="$PROJECT_DIR/server/data"
+SEEN_FILE="$DATA_DIR/.memory/news-seen.txt"
+mkdir -p "$DATA_DIR/.memory"
 touch "$SEEN_FILE"
-mkdir -p "$DATA_DIR"
 
 EXISTING="$DATA_DIR/news.json"
 if [ ! -f "$EXISTING" ] || [ ! -s "$EXISTING" ]; then

@@ -4,7 +4,9 @@
 # All data is live market data. No fabricated content.
 
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-DATA_DIR="$HOME/.openclaw/workspace/socc-dashboard/server/data"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+DATA_DIR="$PROJECT_DIR/server/data"
 mkdir -p "$DATA_DIR"
 
 TMPFILE=$(mktemp)

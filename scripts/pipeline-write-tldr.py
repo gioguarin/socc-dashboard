@@ -6,7 +6,9 @@ Where json-string is: [{"id": "abc123", "tldr": "Summary text", "sentiment": "po
 """
 import json, sys, os
 
-data_dir = os.path.expanduser("~/.openclaw/workspace/socc-dashboard/server/data")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)
+data_dir = os.path.join(project_dir, "server", "data")
 news_path = os.path.join(data_dir, "news.json")
 
 if len(sys.argv) < 2:

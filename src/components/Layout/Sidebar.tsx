@@ -18,7 +18,8 @@ import {
   Coffee,
   Bell,
 } from 'lucide-react';
-import type { View } from '../../types';
+import type { View, ThreatItem, NewsItem } from '../../types';
+import { useApi } from '../../hooks/useApi';
 import { ThemeSelector } from '../Settings/ThemeSelector';
 import AnalogClock from './AnalogClock';
 
@@ -58,6 +59,13 @@ export default function Sidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const { data: threats } = useApi<ThreatItem[]>('/api/threats', 300_000);
+  const { data: news } = useApi<NewsItem[]>('/api/news', 300_000);
+
+  const criticalThreats = threats?.filter(t => t.severity === 'critical' || t.severity === 'high').length ?? 0;
+  const newNews = news?.filter(n => n.status === 'new').length ?? 0;
+  const triageTotal = criticalThreats + newNews;
 
   const handleNavClick = (view: View) => {
     onViewChange(view);
@@ -118,6 +126,32 @@ export default function Sidebar({
           );
         })}
       </nav>
+
+      {/* Triage indicator */}
+      <div className="border-t border-socc-border/20 px-2 py-2">
+        {collapsed ? (
+          <div className="relative group/triage flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+              <span className="text-xs font-bold text-amber-400">{triageTotal}</span>
+            </div>
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-md bg-socc-surface border border-socc-border/50 shadow-lg text-xs text-gray-200 whitespace-nowrap opacity-0 pointer-events-none group-hover/triage:opacity-100 transition-opacity duration-200 z-50">
+              Triage: {criticalThreats} threats, {newNews} news
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 px-3 py-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Triage</span>
+              <span className="ml-auto text-xs font-bold text-amber-300">{triageTotal}</span>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] text-gray-400">
+              <span><span className="text-amber-400 font-semibold">{criticalThreats}</span> crit/high threats</span>
+              <span><span className="text-amber-400 font-semibold">{newNews}</span> new articles</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Analog clock */}
       <div className="border-t border-socc-border/20">

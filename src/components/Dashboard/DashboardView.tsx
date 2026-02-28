@@ -114,11 +114,11 @@ export default function DashboardView({ onNavigate, visiblePanels }: DashboardVi
               originalHeights.current[bp][panel] = item.h;
               return { ...item, h: COLLAPSED_HEIGHT, minH: COLLAPSED_HEIGHT };
             } else {
-              // Expanding: restore original height
-              const savedH = originalHeights.current[bp]?.[panel] ?? item.h;
+              // Expanding: restore original height, fall back to default if ref was lost (page reload)
               const defaultItem = DEFAULT_LAYOUTS[bp]?.find((d: LayoutItem) => d.i === panel);
+              const savedH = originalHeights.current[bp]?.[panel] ?? defaultItem?.h ?? item.h;
               const minH = defaultItem?.minH ?? 2;
-              return { ...item, h: savedH, minH };
+              return { ...item, h: Math.max(savedH, minH), minH };
             }
           });
         }

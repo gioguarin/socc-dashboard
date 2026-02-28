@@ -4,7 +4,9 @@
 # Designed to be called by an OpenClaw cron job (isolated session with LLM access).
 # Outputs a list of article IDs and their content for the cron agent to summarize.
 
-DATA_DIR="$HOME/.openclaw/workspace/socc-dashboard/server/data"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+DATA_DIR="$PROJECT_DIR/server/data"
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
 python3 - "$DATA_DIR" << 'PYEOF'
