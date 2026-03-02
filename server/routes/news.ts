@@ -4,6 +4,7 @@ import { ingestNews } from '../db/ingest.js';
 import { detectAnomaly } from '../anomaly.js';
 import { getDb } from '../db/index.js';
 import { sendSuccess, sendBadRequest, sendServerError } from '../utils/response.js';
+import { consolidateNews } from '../utils/consolidate.js';
 
 const router = Router();
 
@@ -53,10 +54,13 @@ router.get('/', (_req, res) => {
       // Non-fatal: SQLite write failure shouldn't break the API
     }
 
+    // Consolidate near-duplicate articles from multiple sources
+    const consolidated = consolidateNews(data);
+
     // Check for anomalies
     const anomaly = detectAnomaly('news');
 
-    sendSuccess(res, data, { anomaly });
+    sendSuccess(res, consolidated, { anomaly });
   } catch {
     sendServerError(res, 'Failed to read news data');
   }
@@ -91,7 +95,7 @@ router.get('/', (_req, res) => {
  */
 router.get('/history', (req, res) => {
   try {
-    const days = Math.min(parseInt(String(req.query.days) || '30', 10), 365);
+    const rawDays = parseInt(String(req.query.days), 10); const days = Math.min(isNaN(rawDays) || rawDays < 1 ? 30 : rawDays, 365);
     const source = req.query.source as string | undefined;
 
     const db = getDb();

@@ -86,7 +86,7 @@ router.get('/', (_req, res) => {
  */
 router.get('/history', (req, res) => {
   try {
-    const days = Math.min(parseInt(String(req.query.days) || '30', 10), 365);
+    const rawDays = parseInt(String(req.query.days), 10); const days = Math.min(isNaN(rawDays) || rawDays < 1 ? 30 : rawDays, 365);
     const severity = req.query.severity as string | undefined;
 
     const db = getDb();
@@ -134,7 +134,7 @@ router.get('/history', (req, res) => {
  */
 router.get('/trends', (req, res) => {
   try {
-    const days = Math.min(parseInt(String(req.query.days) || '30', 10), 365);
+    const rawDays = parseInt(String(req.query.days), 10); const days = Math.min(isNaN(rawDays) || rawDays < 1 ? 30 : rawDays, 365);
     const db = getDb();
 
     const rows = db.prepare(`

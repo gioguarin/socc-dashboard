@@ -19,15 +19,17 @@ interface NewsFeedProps {
 export default function NewsFeed({ compact = false, maxItems, onViewAll }: NewsFeedProps) {
   const { data: news, loading, anomaly } = useApiWithAnomaly<NewsItem[]>('/api/news', REFRESH_INTERVAL);
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const filtered = useMemo(() => {
     if (!news) return [];
     let result = [...news];
     if (sourceFilter !== 'all') result = result.filter((n) => n.source === sourceFilter);
+    if (categoryFilter !== 'all') result = result.filter((n) => n.category === categoryFilter);
     result.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
     if (maxItems) result = result.slice(0, maxItems);
     return result;
-  }, [news, sourceFilter, maxItems]);
+  }, [news, sourceFilter, categoryFilter, maxItems]);
 
   const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const newCount = news?.filter((n) => new Date(n.publishedAt).getTime() > oneDayAgo).length || 0;
@@ -62,7 +64,13 @@ export default function NewsFeed({ compact = false, maxItems, onViewAll }: NewsF
 
       {!compact && (
         <div className="px-4 pt-3">
-          <NewsFilters activeSource={sourceFilter} onSourceChange={setSourceFilter} />
+          <NewsFilters
+            activeSource={sourceFilter}
+            onSourceChange={setSourceFilter}
+            activeCategory={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            items={news || []}
+          />
         </div>
       )}
 

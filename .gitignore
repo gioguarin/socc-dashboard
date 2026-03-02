@@ -41,5 +41,8 @@ tsconfig.tsbuildinfo
 # Test coverage
 coverage/
 
+# Agent reports (generated at runtime)
+agents/reports/
+
 # Internal build instructions
 CLAUDE.md

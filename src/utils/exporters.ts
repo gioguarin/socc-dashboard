@@ -5,6 +5,11 @@
 
 import type { ThreatItem, Briefing } from '../types';
 
+/** Escape HTML entities to prevent XSS in document.write */
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /** Trigger a file download in the browser */
 function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
@@ -48,12 +53,12 @@ export function exportBriefingPdf(briefing: Briefing): void {
   const highlightsHtml = briefing.highlights.length > 0
     ? `<div class="highlights">
         <h2>Key Highlights</h2>
-        <ul>${briefing.highlights.map((h) => `<li>${h}</li>`).join('')}</ul>
+        <ul>${briefing.highlights.map((h) => `<li>${escHtml(h)}</li>`).join('')}</ul>
        </div>`
     : '';
 
-  // Convert basic markdown to HTML for printing
-  const contentHtml = briefing.content
+  // Convert basic markdown to HTML for printing (escape first, then apply formatting)
+  const contentHtml = escHtml(briefing.content)
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^\*\*(.+?)\*\*/gm, '<strong>$1</strong>')
@@ -66,7 +71,7 @@ export function exportBriefingPdf(briefing: Briefing): void {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>SOCC Briefing — ${briefing.date}</title>
+      <title>SOCC Briefing — ${escHtml(briefing.date)}</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.6; }
@@ -92,7 +97,7 @@ export function exportBriefingPdf(briefing: Briefing): void {
     <body>
       <div class="header">
         <h1>🛡️ SOCC Daily Briefing</h1>
-        <div class="meta">Date: ${briefing.date} | Generated: ${new Date(briefing.createdAt).toLocaleString()}</div>
+        <div class="meta">Date: ${escHtml(briefing.date)} | Generated: ${escHtml(new Date(briefing.createdAt).toLocaleString())}</div>
       </div>
       ${highlightsHtml}
       <div class="content">${contentHtml}</div>
@@ -108,17 +113,26 @@ export function exportBriefingPdf(briefing: Briefing): void {
 
 /** Export current filtered threats as CSV */
 export function exportThreatsCsv(threats: ThreatItem[]): void {
+  /** Quote and escape a CSV cell, preventing formula injection */
+  const csvCell = (v: string): string => {
+    // Prefix formula-triggering characters to prevent CSV injection in spreadsheet apps
+    let safe = v;
+    if (/^[=+\-@\t\r]/.test(safe)) safe = `'${safe}`;
+    if (/[,"\n\r]/.test(safe)) return `"${safe.replace(/"/g, '""')}"`;
+    return safe;
+  };
+
   const headers = ['CVE ID', 'Title', 'Severity', 'CVSS Score', 'Source', 'Published', 'Status', 'CISA KEV', 'URL'];
   const rows = threats.map((t) => [
-    t.cveId ?? '',
-    `"${(t.title || '').replace(/"/g, '""')}"`,
-    t.severity,
-    t.cvssScore?.toString() ?? '',
-    t.source,
-    t.publishedAt,
-    t.status,
-    t.cisaKev ? 'Yes' : 'No',
-    t.url ?? '',
+    csvCell(t.cveId ?? ''),
+    csvCell(t.title || ''),
+    csvCell(t.severity),
+    csvCell(t.cvssScore?.toString() ?? ''),
+    csvCell(t.source),
+    csvCell(t.publishedAt),
+    csvCell(t.status),
+    csvCell(t.cisaKev ? 'Yes' : 'No'),
+    csvCell(t.url ?? ''),
   ]);
 
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

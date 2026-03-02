@@ -13,9 +13,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "agent:qa": "tsx agents/qa.ts",
+    "agent:analysis": "tsx agents/analysis.ts",
+    "agent:uiux": "tsx agents/uiux.ts",
+    "agent:all": "tsx agents/analysis.ts --save && tsx agents/uiux.ts --save && tsx agents/qa.ts --save"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.63",
     "@anthropic-ai/sdk": "^0.78.0",
     "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",

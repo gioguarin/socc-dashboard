@@ -36,6 +36,16 @@ fetch_source "crowdstrike" '%22CrowdStrike%22+when:7d'  >> "$TMPFILE"
 fetch_source "paloalto"    '%22Palo+Alto+Networks%22+when:7d' >> "$TMPFILE"
 fetch_source "f5"          '%22F5+Networks%22+OR+%22F5+Inc%22+when:7d' >> "$TMPFILE"
 
+# AI Companies
+fetch_source "openai"       '%22OpenAI%22+when:7d'       >> "$TMPFILE"
+fetch_source "anthropic"    '%22Anthropic%22+when:7d'    >> "$TMPFILE"
+fetch_source "google_ai"    '%22Google+AI%22+OR+%22Google+Gemini%22+OR+%22Google+DeepMind%22+when:7d' >> "$TMPFILE"
+fetch_source "meta_ai"      '%22Meta+AI%22+OR+%22LLaMA%22+when:7d' >> "$TMPFILE"
+fetch_source "microsoft_ai" '%22Microsoft+AI%22+OR+%22Microsoft+Copilot%22+when:7d' >> "$TMPFILE"
+
+# World Events
+fetch_source "world"        'world+news+when:3d'         >> "$TMPFILE"
+
 # Akamai Blog RSS
 echo "|||SOURCE:akamai_blog|||" >> "$TMPFILE"
 curl -s -m 15 -H "User-Agent: $UA" 'https://feeds.feedburner.com/akamai/blog' >> "$TMPFILE" 2>/dev/null
@@ -75,7 +85,9 @@ sections = re.split(r'\|\|\|SOURCE:(\w+)\|\|\|', raw)
 source_map = {
     "akamai": "akamai", "cloudflare": "cloudflare", "fastly": "fastly",
     "zscaler": "zscaler", "crowdstrike": "crowdstrike",
-    "paloalto": "paloalto", "f5": "f5", "akamai_blog": "akamai"
+    "paloalto": "paloalto", "f5": "f5", "akamai_blog": "akamai",
+    "openai": "openai", "anthropic": "anthropic", "google_ai": "google_ai",
+    "meta_ai": "meta_ai", "microsoft_ai": "microsoft_ai", "world": "world"
 }
 
 security_kw = re.compile(r'CVE|vuln|zero.?day|exploit|breach|DDoS|ransomware|malware|attack|hack|threat|botnet|APT|phishing', re.I)
@@ -83,10 +95,13 @@ product_kw = re.compile(r'launch|release|announc|update|new feature|beta|GA|plat
 business_kw = re.compile(r'earning|revenue|acqui|merger|partner|invest|IPO|stock|quarter|fiscal|CEO|hire', re.I)
 research_kw = re.compile(r'research|report|study|survey|analysis|whitepaper|finding|trend|insight|state of', re.I)
 incident_kw = re.compile(r'outage|incident|down|disrupt|issue|failure|impacted|degraded', re.I)
+ai_kw = re.compile(r'GPT|LLM|AI model|language model|ChatGPT|Claude|Gemini|Copilot|LLaMA|diffusion|transformer|neural|deep.?learn|machine.?learn|generative AI|AGI|frontier model|foundation model', re.I)
+ai_sources = {"openai", "anthropic", "google_ai", "meta_ai", "microsoft_ai"}
 
-def categorize(title):
+def categorize(title, source_key=""):
     if incident_kw.search(title): return "incident"
     if security_kw.search(title): return "security"
+    if source_key in ai_sources or ai_kw.search(title): return "ai"
     if research_kw.search(title): return "research"
     if business_kw.search(title): return "business"
     if product_kw.search(title): return "product"
@@ -100,7 +115,13 @@ source_patterns = {
     "crowdstrike": re.compile(r'crowdstrike', re.I),
     "paloalto": re.compile(r'palo\s*alto', re.I),
     "f5": re.compile(r'f5\b|f5\s', re.I),
-    "akamai_blog": None
+    "akamai_blog": None,
+    "openai": re.compile(r'openai|open\s*ai', re.I),
+    "anthropic": re.compile(r'anthropic|claude', re.I),
+    "google_ai": re.compile(r'google\s*(ai|gemini|deepmind)', re.I),
+    "meta_ai": re.compile(r'meta\s*ai|llama', re.I),
+    "microsoft_ai": re.compile(r'microsoft\s*(ai|copilot)', re.I),
+    "world": None,
 }
 
 i = 1
@@ -157,7 +178,7 @@ while i < len(sections):
             "source": dashboard_source,
             "url": link,
             "publishedAt": iso_date,
-            "category": categorize(title),
+            "category": categorize(title, source_key),
             "status": "new"
         })
         seen_ids.add(item_id)

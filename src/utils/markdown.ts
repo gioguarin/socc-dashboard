@@ -121,6 +121,11 @@ function inlineFormat(text: string): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     /* Strikethrough */
     .replace(/~~(.+?)~~/g, '<del>$1</del>')
-    /* Links [text](url) */
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>');
+    /* Links [text](url) — only allow http/https to prevent javascript: XSS */
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
+      if (/^https?:\/\//i.test(url)) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="md-link">${linkText}</a>`;
+      }
+      return linkText;
+    });
 }

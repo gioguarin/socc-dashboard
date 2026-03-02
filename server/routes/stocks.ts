@@ -153,7 +153,7 @@ router.get('/', (_req, res) => {
  */
 router.get('/history', (req, res) => {
   try {
-    const days = Math.min(parseInt(String(req.query.days) || '90', 10), 365);
+    const rawDays = parseInt(String(req.query.days), 10); const days = Math.min(isNaN(rawDays) || rawDays < 1 ? 90 : rawDays, 365);
     const symbol = req.query.symbol as string | undefined;
 
     const db = getDb();
@@ -211,6 +211,11 @@ router.get('/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
     const range = (req.query.range as YahooRange) || '1mo';
+
+    if (!/^[A-Z]{1,10}$/.test(symbol)) {
+      res.status(400).json({ success: false, error: 'Invalid symbol format' });
+      return;
+    }
 
     if (!VALID_RANGES.includes(range)) {
       res.status(400).json({ success: false, error: `Invalid range. Valid: ${VALID_RANGES.join(', ')}` });
@@ -338,8 +343,12 @@ router.post('/batch', async (req, res) => {
       return;
     }
 
-    // Fetch all symbols in parallel (limit to 10)
-    const limitedSymbols = symbols.slice(0, 10).map((s) => s.toUpperCase());
+    // Fetch all symbols in parallel (limit to 10, validate format)
+    const limitedSymbols = symbols.slice(0, 10).map((s) => s.toUpperCase()).filter((s) => /^[A-Z]{1,10}$/.test(s));
+    if (limitedSymbols.length === 0) {
+      res.status(400).json({ success: false, error: 'No valid symbols provided' });
+      return;
+    }
 
     const results = await Promise.all(
       limitedSymbols.map(async (symbol) => {

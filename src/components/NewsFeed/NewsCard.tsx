@@ -65,6 +65,11 @@ export default function NewsCard({ item }: NewsCardProps) {
                   AI Summary
                 </span>
               )}
+              {item.relatedArticles && item.relatedArticles.length > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                  +{item.relatedArticles.length} source{item.relatedArticles.length > 1 ? 's' : ''}
+                </span>
+              )}
               <span className="text-[10px] text-gray-600">{timeAgo(item.publishedAt)}</span>
             </div>
             <h4 className="text-sm font-medium text-gray-200 leading-snug">{item.title}</h4>
@@ -125,6 +130,32 @@ export default function NewsCard({ item }: NewsCardProps) {
 
               {/* Original description */}
               <p className="text-xs text-gray-500 leading-relaxed">{item.summary}</p>
+
+              {/* Also reported by — consolidated sources */}
+              {item.relatedArticles && item.relatedArticles.length > 0 && (
+                <div className="mt-2.5 pt-2 border-t border-socc-border/15">
+                  <span className="text-[10px] text-gray-600 uppercase tracking-wider font-semibold">
+                    Also reported by
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {item.relatedArticles.map((rel, idx) => {
+                      const relColor = SOURCE_COLORS[rel.source] || SOURCE_COLORS.general;
+                      return (
+                        <a
+                          key={idx}
+                          href={rel.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border hover:opacity-80 transition-opacity ${relColor}`}
+                          title={rel.title}
+                        >
+                          {SOURCE_LABELS[rel.source] || rel.source}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <a
                 href={item.url}

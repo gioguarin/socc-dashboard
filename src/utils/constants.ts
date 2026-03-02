@@ -24,6 +24,12 @@ export const SOURCE_COLORS: Record<string, string> = {
   crowdstrike: 'text-red-300 bg-red-500/10 border-red-500/30',
   paloalto: 'text-green-400 bg-green-500/10 border-green-500/30',
   f5: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
+  openai: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+  anthropic: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
+  google_ai: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
+  meta_ai: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+  microsoft_ai: 'text-teal-400 bg-teal-500/10 border-teal-500/30',
+  world: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30',
   general: 'text-gray-400 bg-gray-500/10 border-gray-500/30',
 } as const;
 
@@ -35,6 +41,12 @@ export const SOURCE_LABELS: Record<string, string> = {
   crowdstrike: 'CrowdStrike',
   paloalto: 'Palo Alto',
   f5: 'F5',
+  openai: 'OpenAI',
+  anthropic: 'Anthropic',
+  google_ai: 'Google AI',
+  meta_ai: 'Meta AI',
+  microsoft_ai: 'Microsoft AI',
+  world: 'World',
   general: 'General',
 } as const;
 
@@ -44,6 +56,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   business: 'Business',
   research: 'Research',
   incident: 'Incident',
+  ai: 'AI',
 } as const;
 
 export const REFRESH_INTERVAL = 60000; // 1 minute

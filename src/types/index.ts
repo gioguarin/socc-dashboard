@@ -2,13 +2,15 @@ export interface NewsItem {
   id: string;
   title: string;
   summary: string;
-  source: 'akamai' | 'cloudflare' | 'fastly' | 'zscaler' | 'crowdstrike' | 'paloalto' | 'f5' | 'general';
+  source: 'akamai' | 'cloudflare' | 'fastly' | 'zscaler' | 'crowdstrike' | 'paloalto' | 'f5'
+    | 'openai' | 'anthropic' | 'google_ai' | 'meta_ai' | 'microsoft_ai' | 'world' | 'general';
   url: string;
   publishedAt: string;
-  category: 'product' | 'security' | 'business' | 'research' | 'incident';
+  category: 'product' | 'security' | 'business' | 'research' | 'incident' | 'ai';
   status: 'new' | 'reviewed' | 'flagged' | 'dismissed';
   sentiment?: 'positive' | 'negative' | 'neutral';
   tldr?: string;
+  relatedArticles?: { title: string; url: string; source: string }[];
 }
 
 export interface ThreatItem {

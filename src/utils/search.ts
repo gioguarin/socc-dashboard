@@ -16,12 +16,18 @@ function matches(text: string | undefined | null, query: string): boolean {
   return text.toLowerCase().includes(query.toLowerCase());
 }
 
+/** Escape HTML entities to prevent XSS */
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /** Highlight matching text with <mark> tags */
 export function highlightMatch(text: string, query: string): string {
-  if (!query.trim()) return text;
+  if (!query.trim()) return escapeHtml(text);
+  const safe = escapeHtml(text);
   const escaped = escapeRegex(query);
   const regex = new RegExp(`(${escaped})`, 'gi');
-  return text.replace(regex, '<mark class="bg-socc-cyan/30 text-socc-cyan rounded px-0.5">$1</mark>');
+  return safe.replace(regex, '<mark class="bg-socc-cyan/30 text-socc-cyan rounded px-0.5">$1</mark>');
 }
 
 /** Search threats and return matching results */

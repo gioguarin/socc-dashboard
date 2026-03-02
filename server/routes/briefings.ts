@@ -33,11 +33,17 @@ router.get('/', async (_req, res) => {
   try {
     let briefings = getAllBriefings();
 
-    // Auto-generate one on first visit so the panel isn't empty
+    // Auto-generate on first visit, but only if pipeline data exists
     if (briefings.length === 0) {
-      const generated = await buildBriefing();
-      saveBriefing(generated);
-      briefings = [generated];
+      const { readDataFile } = await import('../utils.js');
+      const threats = readDataFile('threats.json', []);
+      const news = readDataFile('news.json', []);
+      const hasData = threats.length > 0 || news.length > 0;
+      if (hasData) {
+        const generated = await buildBriefing();
+        saveBriefing(generated);
+        briefings = [generated];
+      }
     }
 
     sendSuccess(res, briefings);
