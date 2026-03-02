@@ -43,7 +43,7 @@ const sampleThreats: ThreatItem[] = [
     cvssScore: undefined,
     source: 'NVD',
     publishedAt: '2024-06-14',
-    status: 'reviewed',
+    status: 'investigating',
     cisaKev: false,
     url: '',
     description: 'XSS issue',

@@ -6,6 +6,11 @@ import { formatDate } from '../../utils/formatters';
 import { renderMarkdown } from '../../utils/markdown';
 import Badge from '../common/Badge';
 
+interface BriefingCardProps {
+  briefing: Briefing;
+  defaultExpanded?: boolean;
+}
+
 export default function BriefingCard({ briefing, defaultExpanded = false }: BriefingCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
