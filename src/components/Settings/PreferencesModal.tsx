@@ -25,7 +25,6 @@ const VIEW_OPTIONS: { value: View; label: string }[] = [
   { value: 'stocks', label: 'Stocks' },
   { value: 'briefings', label: 'Briefings' },
   { value: 'notes', label: 'Notes' },
-  { value: 'projects', label: 'Projects' },
 ];
 
 interface PreferencesModalProps {

@@ -75,7 +75,7 @@ describe('useKeyboardShortcuts hook', () => {
       ['4', 'stocks'],
       ['5', 'briefings'],
       ['6', 'notes'],
-      ['7', 'projects'],
+      ['7', 'calendar'],
     ])('key %s navigates to %s', (key, view) => {
       const actions = makeActions();
       renderHook(() => useKeyboardShortcuts(actions));

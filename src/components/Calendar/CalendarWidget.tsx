@@ -80,7 +80,7 @@ export function CalendarWidget() {
     if (!newTitle.trim() || !newDate) return;
     setEvents((prev) => [
       ...prev,
-      { id: `evt-${Date.now()}`, title: newTitle.trim(), date: newDate, type: 'event', projectId: null },
+      { id: `evt-${Date.now()}`, title: newTitle.trim(), date: newDate, type: 'event' },
     ]);
     setNewTitle('');
     setNewDate('');

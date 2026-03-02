@@ -12,7 +12,6 @@ import NewsFeed from './components/NewsFeed/NewsFeed';
 import StockTracker from './components/StockTracker/StockTracker';
 import BriefingPanel from './components/Briefing/BriefingPanel';
 import { ShiftNotes } from './components/Notes/ShiftNotes';
-import { TodoBoard } from './components/Projects/ProjectTracker';
 import { CalendarView } from './components/Calendar/CalendarView';
 import RssSourceManager from './components/Settings/RssSourceManager';
 import { PreferencesModal } from './components/Settings/PreferencesModal';
@@ -26,7 +25,7 @@ export default function App() {
 
   const [activeView, setActiveView] = useState<View>(() => {
     const pref = preferences.defaultView;
-    const validViews: View[] = ['dashboard', 'threats', 'news', 'stocks', 'briefings', 'notes', 'projects', 'calendar'];
+    const validViews: View[] = ['dashboard', 'threats', 'news', 'stocks', 'briefings', 'notes', 'calendar'];
     return validViews.includes(pref as View) ? (pref as View) : 'dashboard';
   });
 
@@ -86,8 +85,6 @@ export default function App() {
         return <ViewPanel panelName="Briefings"><BriefingPanel /></ViewPanel>;
       case 'notes':
         return <ViewPanel panelName="Shift Notes"><ShiftNotes /></ViewPanel>;
-      case 'projects':
-        return <ViewPanel panelName="Todo"><TodoBoard /></ViewPanel>;
       case 'calendar':
         return <ViewPanel panelName="Calendar"><CalendarView /></ViewPanel>;
     }

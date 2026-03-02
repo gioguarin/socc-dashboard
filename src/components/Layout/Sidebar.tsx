@@ -7,7 +7,6 @@ import {
   TrendingUp,
   FileText,
   StickyNote,
-  ListChecks,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -42,7 +41,6 @@ const NAV_ITEMS: { view: View; icon: typeof LayoutDashboard; label: string }[] =
   { view: 'stocks', icon: TrendingUp, label: 'Stocks' },
   { view: 'briefings', icon: FileText, label: 'Briefings' },
   { view: 'notes', icon: StickyNote, label: 'Notes' },
-  { view: 'projects', icon: ListChecks, label: 'Todo' },
   { view: 'calendar', icon: Calendar, label: 'Calendar' },
 ];
 

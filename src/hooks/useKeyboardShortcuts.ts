@@ -76,7 +76,7 @@ export function useKeyboardShortcuts(actions: KeyboardShortcutActions) {
         case '4': actions.onNavigate('stocks'); break;
         case '5': actions.onNavigate('briefings'); break;
         case '6': actions.onNavigate('notes'); break;
-        case '7': actions.onNavigate('projects'); break;
+        case '7': actions.onNavigate('calendar'); break;
       }
     },
     [actions]

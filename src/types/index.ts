@@ -96,7 +96,7 @@ export interface SearchResult {
   view: View;
 }
 
-export type View = 'dashboard' | 'threats' | 'news' | 'stocks' | 'briefings' | 'notes' | 'projects' | 'calendar';
+export type View = 'dashboard' | 'threats' | 'news' | 'stocks' | 'briefings' | 'notes' | 'calendar';
 
 export type CalendarTimeRange = '12h' | '24h' | '72h' | '1w' | '30d';
 
@@ -133,23 +133,11 @@ export interface ShiftNote {
   updatedAt: string;
 }
 
-export type TodoStatus = 'todo' | 'in_progress' | 'done';
-
-export interface TodoItem {
-  id: string;
-  title: string;
-  description: string;
-  status: TodoStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface CalendarEvent {
   id: string;
   title: string;
   date: string;
   type: 'deadline' | 'event';
-  projectId: string | null;
 }
 
 export interface QuickLink {

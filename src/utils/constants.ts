@@ -75,5 +75,5 @@ export const KEYBOARD_SHORTCUTS = [
   { key: 'Esc', description: 'Close / clear' },
   { key: '1-5', description: 'Switch panels' },
   { key: '6', description: 'Shift Notes' },
-  { key: '7', description: 'Projects' },
+  { key: '7', description: 'Calendar' },
 ] as const;
