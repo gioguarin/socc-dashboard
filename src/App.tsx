@@ -118,7 +118,7 @@ export default function App() {
             key={activeView}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.15 }}
             className="h-full"
           >
